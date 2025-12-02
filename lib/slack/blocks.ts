@@ -50,11 +50,13 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
       ],
     },
     {
-      type: "section",
-      text: {
-        type: "mrkdwn",
-        text: `📥 Inbox: *${inboxTasks.length}* • ✅ Next Actions: *${nextActionTasks.length}* • 📅 Scheduled: *${scheduledTasks.length}* • ⏳ Waiting: *${waitingTasks.length}* • 💭 Someday: *${somedayTasks.length}*`,
-      },
+      type: "context",
+      elements: [
+        {
+          type: "mrkdwn",
+          text: `📥 Inbox: *${inboxTasks.length}* • ✅ Next Actions: *${nextActionTasks.length}* • 📅 Scheduled: *${scheduledTasks.length}* • ⏳ Waiting: *${waitingTasks.length}* • 💭 Someday: *${somedayTasks.length}*`,
+        },
+      ],
     },
     {
       type: "divider",

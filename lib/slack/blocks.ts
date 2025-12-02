@@ -25,8 +25,9 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
   const scheduledTasks = allActiveTasks.filter((t) => t.dueDate);
   const nextActionTasks = allActiveTasks.filter((t) => !t.dueDate);
 
+  // Sort next actions and scheduled tasks
+  nextActionTasks.sort((a: typeof tasks.$inferSelect, b: typeof tasks.$inferSelect) => {
     // Sort function: priority first (high > medium > low), then oldest first
-  const sortByPriorityAndDate = (a: typeof tasks.$inferSelect, b: typeof tasks.$inferSelect) => {
     const priorityOrder = { high: 0, medium: 1, low: 2 };
     const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] ?? 1;
     const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] ?? 1;
@@ -36,11 +37,18 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
     }
 
     return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-  };
+  });
+  scheduledTasks.sort((a: typeof tasks.$inferSelect, b: typeof tasks.$inferSelect) => {
+    const priorityOrder = { high: 0, medium: 1, low: 2 };
+    const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] ?? 1;
+    const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] ?? 1;
 
-  // Sort next actions and scheduled tasks
-  nextActionTasks.sort(sortByPriorityAndDate);
-  scheduledTasks.sort(sortByPriorityAndDate);
+    if (aPriority !== bPriority) {
+      return aPriority - bPriority;
+    }
+
+    return new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime();
+  });
 
   const blocks: (KnownBlock | Block)[] = [
     {

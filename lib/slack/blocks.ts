@@ -44,7 +44,6 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             text: "➕ Add New Task",
             emoji: true,
           },
-          style: "primary",
           action_id: "open_add_task_modal",
         },
       ],

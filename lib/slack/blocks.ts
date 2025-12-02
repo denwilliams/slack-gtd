@@ -180,7 +180,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
       if (task.dueDate) {
         contextElements.push({
           type: "mrkdwn" as const,
-          text: `📅 ${task.dueDate.toLocaleDateString()}`,
+          text: `📅 ${task.dueDate.toISOString().split("T")[0]}`,
         });
       }
       contextElements.push({
@@ -322,7 +322,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         elements: [
           {
             type: "mrkdwn" as const,
-            text: `📅 ${task.dueDate!.toLocaleDateString()}`,
+            text: `📅 ${task.dueDate!.toISOString().split("T")[0]}`,
           },
           {
             type: "mrkdwn" as const,

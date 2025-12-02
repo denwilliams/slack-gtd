@@ -160,21 +160,24 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
           }`, // \n${getPriorityEmoji(task.priority || "medium")} ${task.priority || "medium"} priority`,
         },
         accessory: {
-          type: "button",
-          text: {
-            type: "plain_text",
-            text: "Complete",
-            emoji: true,
-          },
-          style: "primary",
-          value: task.id,
-          action_id: `complete_task_${task.id}`,
+          type: "overflow",
+          options: [
+            {
+              text: {
+                type: "plain_text",
+                text: "🗑️ Delete",
+                emoji: true,
+              },
+              value: task.id,
+            },
+          ],
+          action_id: `task_overflow_${task.id}`,
         },
       };
 
       blocks.push(taskBlock);
 
-      // Add priority, move, and delete buttons
+      // Add priority, move, and complete buttons
       blocks.push({
         type: "actions",
         elements: [
@@ -227,30 +230,12 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             type: "button",
             text: {
               type: "plain_text",
-              text: "Delete",
+              text: "Complete",
               emoji: true,
             },
-            style: "danger",
+            style: "primary",
             value: task.id,
-            action_id: `delete_task_${task.id}`,
-            confirm: {
-              title: {
-                type: "plain_text",
-                text: "Are you sure?",
-              },
-              text: {
-                type: "mrkdwn",
-                text: "Do you want to delete this task?",
-              },
-              confirm: {
-                type: "plain_text",
-                text: "Delete",
-              },
-              deny: {
-                type: "plain_text",
-                text: "Cancel",
-              },
-            },
+            action_id: `complete_task_${task.id}`,
           },
         ],
       });
@@ -300,15 +285,18 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
           text: `*${task.title}*${task.description ? `\n${task.description}` : ""}\n📅 Due: ${task.dueDate!.toLocaleDateString()}`, // \n${getPriorityEmoji(task.priority || "medium")} ${task.priority || "medium"} priority`,
         },
         accessory: {
-          type: "button",
-          text: {
-            type: "plain_text",
-            text: "Complete",
-            emoji: true,
-          },
-          style: "primary",
-          value: task.id,
-          action_id: `complete_task_${task.id}`,
+          type: "overflow",
+          options: [
+            {
+              text: {
+                type: "plain_text",
+                text: "🗑️ Delete",
+                emoji: true,
+              },
+              value: task.id,
+            },
+          ],
+          action_id: `task_overflow_${task.id}`,
         },
       });
 
@@ -354,30 +342,12 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             type: "button",
             text: {
               type: "plain_text",
-              text: "Delete",
+              text: "Complete",
               emoji: true,
             },
-            style: "danger",
+            style: "primary",
             value: task.id,
-            action_id: `delete_task_${task.id}`,
-            confirm: {
-              title: {
-                type: "plain_text",
-                text: "Are you sure?",
-              },
-              text: {
-                type: "mrkdwn",
-                text: "Do you want to delete this task?",
-              },
-              confirm: {
-                type: "plain_text",
-                text: "Delete",
-              },
-              deny: {
-                type: "plain_text",
-                text: "Cancel",
-              },
-            },
+            action_id: `complete_task_${task.id}`,
           },
         ],
       });

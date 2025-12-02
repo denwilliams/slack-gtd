@@ -172,6 +172,21 @@ export async function handleInteraction(payload: InteractionPayload) {
       return { ok: true };
     }
 
+    // Handle overflow menu (delete)
+    if (action.action_id.startsWith("task_overflow_")) {
+      const taskId = action.value!;
+      // The selected option will be to delete
+      await deleteTask(taskId, user.slackUserId);
+
+      // Refresh home tab
+      await refreshHomeTab(user.slackUserId, slackTeam.id);
+
+      return {
+        response_action: "update",
+        view: {},
+      };
+    }
+
     // Handle clarify actionable button
     if (action.action_id.startsWith("clarify_actionable_")) {
       const taskId = action.action_id.replace("clarify_actionable_", "");

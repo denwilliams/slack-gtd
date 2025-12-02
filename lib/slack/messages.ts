@@ -1,4 +1,4 @@
-import { slackClient } from './client';
+import { getSlackClient } from './client';
 import type { tasks, users } from '@/db/schema';
 
 export async function sendTaskReminder(
@@ -6,6 +6,7 @@ export async function sendTaskReminder(
   task: typeof tasks.$inferSelect
 ) {
   try {
+    const slackClient = getSlackClient();
     await slackClient.chat.postMessage({
       channel: user.slackUserId,
       text: `⏰ Reminder: You have a task due soon!\n\n*${task.title}*${

@@ -1,4 +1,4 @@
-import { slackClient } from '@/lib/slack/client';
+import { getSlackClient } from '@/lib/slack/client';
 import { findOrCreateUser } from '@/lib/services/user';
 import { getUserTasks } from '@/lib/services/tasks';
 import { buildHomeTab } from '@/lib/slack/blocks';
@@ -15,6 +15,7 @@ export async function handleAppHomeOpened(userId: string, teamId: string) {
     const view = buildHomeTab(tasks);
 
     // Publish the view
+    const slackClient = getSlackClient();
     await slackClient.views.publish({
       user_id: userId,
       view,

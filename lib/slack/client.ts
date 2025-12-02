@@ -11,10 +11,3 @@ export function getSlackClient() {
   }
   return _slackClient;
 }
-
-// For backwards compatibility
-export const slackClient = new Proxy({} as WebClient, {
-  get(_target, prop) {
-    return (getSlackClient() as any)[prop];
-  }
-});

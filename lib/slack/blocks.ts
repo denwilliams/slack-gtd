@@ -81,7 +81,17 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         },
       });
 
-      // Add "Is it actionable?" buttons
+      // Add label and "Is it actionable?" buttons
+      blocks.push({
+        type: "context",
+        elements: [
+          {
+            type: "mrkdwn",
+            text: "_Is this item actionable?_",
+          },
+        ],
+      });
+
       blocks.push({
         type: "actions",
         elements: [

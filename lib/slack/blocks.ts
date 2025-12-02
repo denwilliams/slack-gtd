@@ -376,6 +376,20 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
           type: "mrkdwn",
           text: `*${task.title}*${task.description ? `\n${task.description}` : ""}${task.delegatedTo ? `\n👤 Waiting for: ${task.delegatedTo}` : ""}`,
         },
+        accessory: {
+          type: "overflow",
+          options: [
+            {
+              text: {
+                type: "plain_text",
+                text: "🗑️ Delete",
+                emoji: true,
+              },
+              value: task.id,
+            },
+          ],
+          action_id: `task_overflow_${task.id}`,
+        },
       });
 
       blocks.push({
@@ -391,35 +405,6 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             style: "primary",
             value: task.id,
             action_id: `complete_task_${task.id}`,
-          },
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "Delete",
-              emoji: true,
-            },
-            style: "danger",
-            value: task.id,
-            action_id: `delete_task_${task.id}`,
-            confirm: {
-              title: {
-                type: "plain_text",
-                text: "Are you sure?",
-              },
-              text: {
-                type: "mrkdwn",
-                text: "Do you want to delete this task?",
-              },
-              confirm: {
-                type: "plain_text",
-                text: "Delete",
-              },
-              deny: {
-                type: "plain_text",
-                text: "Cancel",
-              },
-            },
           },
         ],
       });
@@ -448,6 +433,20 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
           type: "mrkdwn",
           text: `*${task.title}*${task.description ? `\n${task.description}` : ""}`,
         },
+        accessory: {
+          type: "overflow",
+          options: [
+            {
+              text: {
+                type: "plain_text",
+                text: "🗑️ Delete",
+                emoji: true,
+              },
+              value: task.id,
+            },
+          ],
+          action_id: `task_overflow_${task.id}`,
+        },
       });
 
       blocks.push({
@@ -463,35 +462,6 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             style: "primary",
             value: task.id,
             action_id: `activate_task_${task.id}`,
-          },
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "Delete",
-              emoji: true,
-            },
-            style: "danger",
-            value: task.id,
-            action_id: `delete_task_${task.id}`,
-            confirm: {
-              title: {
-                type: "plain_text",
-                text: "Are you sure?",
-              },
-              text: {
-                type: "mrkdwn",
-                text: "Do you want to delete this task?",
-              },
-              confirm: {
-                type: "plain_text",
-                text: "Delete",
-              },
-              deny: {
-                type: "plain_text",
-                text: "Cancel",
-              },
-            },
           },
         ],
       });

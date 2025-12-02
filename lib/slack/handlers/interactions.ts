@@ -31,10 +31,10 @@ export async function handleInteraction(payload: InteractionPayload) {
     // Handle complete task button
     if (action.action_id.startsWith('complete_task_')) {
       const taskId = action.value;
-      await completeTask(taskId, user.id);
+      await completeTask(taskId, user.slackUserId);
 
       // Refresh home tab
-      await refreshHomeTab(user.id, slackTeam.id);
+      await refreshHomeTab(user.slackUserId, slackTeam.id);
 
       return {
         response_action: 'update',
@@ -45,10 +45,10 @@ export async function handleInteraction(payload: InteractionPayload) {
     // Handle delete task button
     if (action.action_id.startsWith('delete_task_')) {
       const taskId = action.value;
-      await deleteTask(taskId, user.id);
+      await deleteTask(taskId, user.  slackUserId);
 
       // Refresh home tab
-      await refreshHomeTab(user.id, slackTeam.id);
+      await refreshHomeTab(user.slackUserId, slackTeam.id);
 
       return {
         response_action: 'update',

@@ -35,6 +35,15 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
       },
     },
     {
+      type: "context",
+      elements: [
+        {
+          type: "mrkdwn",
+          text: `📥 Inbox: *${inboxTasks.length}* • ✅ Next Actions: *${nextActionTasks.length}* • 📅 Scheduled: *${scheduledTasks.length}* • ⏳ Waiting: *${waitingTasks.length}* • 💭 Someday: *${somedayTasks.length}*`,
+        },
+      ],
+    },
+    {
       type: "actions",
       elements: [
         {
@@ -45,15 +54,6 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             emoji: true,
           },
           action_id: "open_add_task_modal",
-        },
-      ],
-    },
-    {
-      type: "context",
-      elements: [
-        {
-          type: "mrkdwn",
-          text: `📥 Inbox: *${inboxTasks.length}* • ✅ Next Actions: *${nextActionTasks.length}* • 📅 Scheduled: *${scheduledTasks.length}* • ⏳ Waiting: *${waitingTasks.length}* • 💭 Someday: *${somedayTasks.length}*`,
         },
       ],
     },

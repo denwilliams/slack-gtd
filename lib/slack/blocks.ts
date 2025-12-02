@@ -1,6 +1,6 @@
 import type { tasks } from '@/db/schema';
 
-export function buildHomeTab(userTasks: Array<typeof tasks.$inferSelect>) {
+export function buildHomeTab(userTasks: Array<typeof tasks.$inferSelect>): any {
   const activeTasks = userTasks.filter((t) => t.status === 'active');
   const completedTasks = userTasks.filter((t) => t.status === 'completed');
 

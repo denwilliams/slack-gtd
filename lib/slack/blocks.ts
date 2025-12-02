@@ -6,10 +6,25 @@ interface HomeView {
   blocks: (KnownBlock | Block)[];
 }
 
-export function buildHomeTab(
-  inboxTasks: Array<typeof tasks.$inferSelect>,
-  activeTasks: Array<typeof tasks.$inferSelect>,
-): HomeView {
+interface GTDTasks {
+  inbox: Array<typeof tasks.$inferSelect>;
+  active: Array<typeof tasks.$inferSelect>;
+  waiting: Array<typeof tasks.$inferSelect>;
+  someday: Array<typeof tasks.$inferSelect>;
+}
+
+export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
+  const {
+    inbox: inboxTasks,
+    active: allActiveTasks,
+    waiting: waitingTasks,
+    someday: somedayTasks,
+  } = tasksByStatus;
+
+  // Separate active tasks into scheduled (with due date) and next actions (without due date)
+  const scheduledTasks = allActiveTasks.filter((t) => t.dueDate);
+  const nextActionTasks = allActiveTasks.filter((t) => !t.dueDate);
+
   const blocks: (KnownBlock | Block)[] = [
     {
       type: "header",
@@ -23,7 +38,7 @@ export function buildHomeTab(
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `You have *${inboxTasks.length}* items in inbox and *${activeTasks.length}* active tasks.`,
+        text: `📥 Inbox: *${inboxTasks.length}* • ✅ Next Actions: *${nextActionTasks.length}* • 📅 Scheduled: *${scheduledTasks.length}* • ⏳ Waiting: *${waitingTasks.length}* • 💭 Someday: *${somedayTasks.length}*`,
       },
     },
     {
@@ -97,18 +112,18 @@ export function buildHomeTab(
     });
   }
 
-  // Active tasks section
-  if (activeTasks.length > 0) {
+  // Next Actions section (active tasks without due dates)
+  if (nextActionTasks.length > 0) {
     blocks.push({
       type: "header",
       text: {
         type: "plain_text",
-        text: "✅ Active Tasks",
+        text: "✅ Next Actions",
         emoji: true,
       },
     });
 
-    activeTasks.slice(0, 10).forEach((task) => {
+    nextActionTasks.slice(0, 10).forEach((task) => {
       const taskBlock: KnownBlock | Block = {
         type: "section",
         text: {
@@ -204,13 +219,13 @@ export function buildHomeTab(
       });
     });
 
-    if (activeTasks.length > 10) {
+    if (nextActionTasks.length > 10) {
       blocks.push({
         type: "context",
         elements: [
           {
             type: "mrkdwn",
-            text: `_Showing 10 of ${activeTasks.length} tasks. Use \`/gtd list\` to see all._`,
+            text: `_Showing 10 of ${nextActionTasks.length} tasks. Use \`/gtd list\` to see all._`,
           },
         ],
       });
@@ -220,7 +235,7 @@ export function buildHomeTab(
       type: "section",
       text: {
         type: "mrkdwn",
-        text: "🎉 *No active tasks!* Use `/gtd add [task]` to create one.",
+        text: "🎉 *No next actions!* Use `/gtd add [task]` to create one.",
       },
     });
   }
@@ -228,6 +243,257 @@ export function buildHomeTab(
   blocks.push({
     type: "divider",
   });
+
+  // Scheduled section (active tasks with due dates)
+  if (scheduledTasks.length > 0) {
+    blocks.push({
+      type: "header",
+      text: {
+        type: "plain_text",
+        text: "📅 Scheduled",
+        emoji: true,
+      },
+    });
+
+    scheduledTasks.slice(0, 10).forEach((task) => {
+      blocks.push({
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}\n📅 Due: ${task.dueDate!.toLocaleDateString()}\n${getPriorityEmoji(task.priority || "medium")} ${task.priority || "medium"} priority`,
+        },
+        accessory: {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "Complete",
+            emoji: true,
+          },
+          style: "primary",
+          value: task.id,
+          action_id: `complete_task_${task.id}`,
+        },
+      });
+
+      blocks.push({
+        type: "actions",
+        elements: [
+          {
+            type: "static_select",
+            placeholder: {
+              type: "plain_text",
+              text: "Change priority",
+              emoji: true,
+            },
+            options: [
+              {
+                text: {
+                  type: "plain_text",
+                  text: "🔴 High",
+                  emoji: true,
+                },
+                value: "high",
+              },
+              {
+                text: {
+                  type: "plain_text",
+                  text: "🟡 Medium",
+                  emoji: true,
+                },
+                value: "medium",
+              },
+              {
+                text: {
+                  type: "plain_text",
+                  text: "🟢 Low",
+                  emoji: true,
+                },
+                value: "low",
+              },
+            ],
+            action_id: `change_priority_${task.id}`,
+          },
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "Delete",
+              emoji: true,
+            },
+            style: "danger",
+            value: task.id,
+            action_id: `delete_task_${task.id}`,
+            confirm: {
+              title: {
+                type: "plain_text",
+                text: "Are you sure?",
+              },
+              text: {
+                type: "mrkdwn",
+                text: "Do you want to delete this task?",
+              },
+              confirm: {
+                type: "plain_text",
+                text: "Delete",
+              },
+              deny: {
+                type: "plain_text",
+                text: "Cancel",
+              },
+            },
+          },
+        ],
+      });
+    });
+
+    blocks.push({
+      type: "divider",
+    });
+  }
+
+  // Waiting For section
+  if (waitingTasks.length > 0) {
+    blocks.push({
+      type: "header",
+      text: {
+        type: "plain_text",
+        text: "⏳ Waiting For",
+        emoji: true,
+      },
+    });
+
+    waitingTasks.slice(0, 10).forEach((task) => {
+      blocks.push({
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}${task.delegatedTo ? `\n👤 Waiting for: ${task.delegatedTo}` : ""}`,
+        },
+      });
+
+      blocks.push({
+        type: "actions",
+        elements: [
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "Mark as Done",
+              emoji: true,
+            },
+            style: "primary",
+            value: task.id,
+            action_id: `complete_task_${task.id}`,
+          },
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "Delete",
+              emoji: true,
+            },
+            style: "danger",
+            value: task.id,
+            action_id: `delete_task_${task.id}`,
+            confirm: {
+              title: {
+                type: "plain_text",
+                text: "Are you sure?",
+              },
+              text: {
+                type: "mrkdwn",
+                text: "Do you want to delete this task?",
+              },
+              confirm: {
+                type: "plain_text",
+                text: "Delete",
+              },
+              deny: {
+                type: "plain_text",
+                text: "Cancel",
+              },
+            },
+          },
+        ],
+      });
+    });
+
+    blocks.push({
+      type: "divider",
+    });
+  }
+
+  // Someday/Maybe section
+  if (somedayTasks.length > 0) {
+    blocks.push({
+      type: "header",
+      text: {
+        type: "plain_text",
+        text: "💭 Someday/Maybe",
+        emoji: true,
+      },
+    });
+
+    somedayTasks.slice(0, 10).forEach((task) => {
+      blocks.push({
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}`,
+        },
+      });
+
+      blocks.push({
+        type: "actions",
+        elements: [
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "Move to Active",
+              emoji: true,
+            },
+            style: "primary",
+            value: task.id,
+            action_id: `activate_task_${task.id}`,
+          },
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "Delete",
+              emoji: true,
+            },
+            style: "danger",
+            value: task.id,
+            action_id: `delete_task_${task.id}`,
+            confirm: {
+              title: {
+                type: "plain_text",
+                text: "Are you sure?",
+              },
+              text: {
+                type: "mrkdwn",
+                text: "Do you want to delete this task?",
+              },
+              confirm: {
+                type: "plain_text",
+                text: "Delete",
+              },
+              deny: {
+                type: "plain_text",
+                text: "Cancel",
+              },
+            },
+          },
+        ],
+      });
+    });
+
+    blocks.push({
+      type: "divider",
+    });
+  }
 
   // Add task button
   blocks.push({

@@ -140,6 +140,23 @@ export async function handleInteraction(payload: InteractionPayload) {
       };
     }
 
+    // Handle activate task (move from Someday to Active)
+    if (action.action_id.startsWith("activate_task_")) {
+      const taskId = action.action_id.replace("activate_task_", "");
+      await clarifyTask(taskId, user.slackUserId, {
+        status: "active",
+        priority: "medium",
+      });
+
+      // Refresh home tab
+      await refreshHomeTab(user.slackUserId, slackTeam.id);
+
+      return {
+        response_action: "update",
+        view: {},
+      };
+    }
+
     // Handle clarify actionable button
     if (action.action_id.startsWith("clarify_actionable_")) {
       const taskId = action.action_id.replace("clarify_actionable_", "");

@@ -3,11 +3,16 @@ import {
   deleteTask,
   createTask,
   updateTaskPriority,
+  clarifyTask,
 } from "@/lib/services/tasks";
 import { findOrCreateUser } from "@/lib/services/user";
 import { refreshHomeTab } from "./home";
 import { getSlackClient } from "@/lib/slack/client";
-import { buildAddTaskModal } from "@/lib/slack/blocks";
+import {
+  buildAddTaskModal,
+  buildActionableModal,
+  buildNotActionableModal,
+} from "@/lib/slack/blocks";
 
 interface BlockAction {
   type: string;
@@ -128,6 +133,34 @@ export async function handleInteraction(payload: InteractionPayload) {
       };
     }
 
+    // Handle clarify actionable button
+    if (action.action_id.startsWith("clarify_actionable_")) {
+      const taskId = action.action_id.replace("clarify_actionable_", "");
+      const slack = getSlackClient();
+      const modalView = buildActionableModal(taskId);
+
+      await slack.views.open({
+        trigger_id: payload.trigger_id!,
+        view: modalView,
+      });
+
+      return { ok: true };
+    }
+
+    // Handle clarify not actionable button
+    if (action.action_id.startsWith("clarify_not_actionable_")) {
+      const taskId = action.action_id.replace("clarify_not_actionable_", "");
+      const slack = getSlackClient();
+      const modalView = buildNotActionableModal(taskId);
+
+      await slack.views.open({
+        trigger_id: payload.trigger_id!,
+        view: modalView,
+      });
+
+      return { ok: true };
+    }
+
     // Handle open add task modal
     if (action.action_id === "open_add_task_modal") {
       const slack = getSlackClient();
@@ -140,6 +173,73 @@ export async function handleInteraction(payload: InteractionPayload) {
 
       return { ok: true };
     }
+  }
+
+  // Handle not actionable modal submission
+  if (
+    type === "view_submission" &&
+    view?.callback_id.startsWith("not_actionable_modal_")
+  ) {
+    const taskId = view.callback_id.replace("not_actionable_modal_", "");
+    const values = view.state.values;
+    const action = values.action_block.action_input.selected_option?.value;
+
+    if (action === "trash") {
+      await deleteTask(taskId, user.slackUserId);
+    } else if (action === "someday") {
+      await clarifyTask(taskId, user.slackUserId, { status: "someday" });
+    } else if (action === "reference") {
+      await clarifyTask(taskId, user.slackUserId, { status: "archived" });
+    }
+
+    // Refresh home tab
+    await refreshHomeTab(user.slackUserId, slackTeam.id);
+
+    return {
+      response_action: "clear",
+    };
+  }
+
+  // Handle actionable modal submission
+  if (
+    type === "view_submission" &&
+    view?.callback_id.startsWith("actionable_modal_")
+  ) {
+    const taskId = view.callback_id.replace("actionable_modal_", "");
+    const values = view.state.values;
+    const action = values.action_block.action_input.selected_option?.value;
+    const dueDate = values.due_date_block?.due_date_input?.selected_date;
+    const delegatedTo = values.delegated_to_block?.delegated_to_input?.value;
+
+    if (action === "do_now") {
+      await clarifyTask(taskId, user.slackUserId, {
+        status: "active",
+        priority: "high",
+      });
+    } else if (action === "do_later") {
+      await clarifyTask(taskId, user.slackUserId, {
+        status: "active",
+        priority: "medium",
+      });
+    } else if (action === "schedule") {
+      await clarifyTask(taskId, user.slackUserId, {
+        status: "active",
+        priority: "medium",
+        dueDate: dueDate ? new Date(dueDate) : undefined,
+      });
+    } else if (action === "delegate") {
+      await clarifyTask(taskId, user.slackUserId, {
+        status: "waiting",
+        delegatedTo: delegatedTo || undefined,
+      });
+    }
+
+    // Refresh home tab
+    await refreshHomeTab(user.slackUserId, slackTeam.id);
+
+    return {
+      response_action: "clear",
+    };
   }
 
   return { ok: true };

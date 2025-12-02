@@ -12,6 +12,8 @@ export async function createTask(
     contextId?: string;
     dueDate?: Date;
     priority?: "high" | "medium" | "low";
+    status?: "inbox" | "active" | "someday" | "waiting";
+    delegatedTo?: string;
   },
 ) {
   const task = await db
@@ -25,7 +27,8 @@ export async function createTask(
       contextId: options?.contextId,
       dueDate: options?.dueDate,
       priority: options?.priority || "medium",
-      status: "active",
+      status: options?.status || "inbox", // Default to inbox for GTD workflow
+      delegatedTo: options?.delegatedTo,
     })
     .returning();
 
@@ -69,6 +72,31 @@ export async function updateTaskPriority(
     .update(tasks)
     .set({
       priority,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(tasks.id, taskId), eq(tasks.slackUserId, userId)))
+    .returning();
+
+  return task[0];
+}
+
+export async function clarifyTask(
+  taskId: string,
+  userId: string,
+  options: {
+    status: "active" | "someday" | "waiting" | "archived";
+    priority?: "high" | "medium" | "low";
+    dueDate?: Date;
+    delegatedTo?: string;
+  },
+) {
+  const task = await db
+    .update(tasks)
+    .set({
+      status: options.status,
+      priority: options.priority,
+      dueDate: options.dueDate,
+      delegatedTo: options.delegatedTo,
       updatedAt: new Date(),
     })
     .where(and(eq(tasks.id, taskId), eq(tasks.slackUserId, userId)))

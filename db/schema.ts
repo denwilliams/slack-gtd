@@ -45,8 +45,9 @@ export const tasks = pgTable("tasks", {
   description: text("description"),
   dueDate: timestamp("due_date"),
   priority: varchar("priority", { length: 20 }).default("medium"), // high, medium, low
-  status: varchar("status", { length: 20 }).default("active").notNull(), // active, completed, archived
+  status: varchar("status", { length: 20 }).default("inbox").notNull(), // inbox, active, completed, someday, waiting, archived
   completedAt: timestamp("completed_at"),
+  delegatedTo: varchar("delegated_to", { length: 255 }), // For "waiting for" items
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

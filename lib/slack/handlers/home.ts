@@ -8,11 +8,12 @@ export async function handleAppHomeOpened(userId: string, teamId: string) {
     // Ensure user exists
     const user = await findOrCreateUser(userId, teamId);
 
-    // Get user's tasks
-    const tasks = await getUserTasks(user.slackUserId);
+    // Get user's inbox and active tasks
+    const inboxTasks = await getUserTasks(user.slackUserId, "inbox");
+    const activeTasks = await getUserTasks(user.slackUserId, "active");
 
     // Build home tab view
-    const view = buildHomeTab(tasks);
+    const view = buildHomeTab(inboxTasks, activeTasks);
 
     // Publish the view
     const slackClient = getSlackClient();

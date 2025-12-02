@@ -7,17 +7,15 @@ interface HomeView {
 }
 
 export function buildHomeTab(
-  userTasks: Array<typeof tasks.$inferSelect>,
+  inboxTasks: Array<typeof tasks.$inferSelect>,
+  activeTasks: Array<typeof tasks.$inferSelect>,
 ): HomeView {
-  const activeTasks = userTasks.filter((t) => t.status === "active");
-  const completedTasks = userTasks.filter((t) => t.status === "completed");
-
   const blocks: (KnownBlock | Block)[] = [
     {
       type: "header",
       text: {
         type: "plain_text",
-        text: "📋 Your GTD Tasks",
+        text: "📋 Your GTD Dashboard",
         emoji: true,
       },
     },
@@ -25,13 +23,79 @@ export function buildHomeTab(
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `You have *${activeTasks.length}* active tasks and *${completedTasks.length}* completed tasks.`,
+        text: `You have *${inboxTasks.length}* items in inbox and *${activeTasks.length}* active tasks.`,
       },
     },
     {
       type: "divider",
     },
   ];
+
+  // Inbox section - items to clarify
+  if (inboxTasks.length > 0) {
+    blocks.push({
+      type: "header",
+      text: {
+        type: "plain_text",
+        text: "📥 Inbox - Clarify Items",
+        emoji: true,
+      },
+    });
+
+    inboxTasks.slice(0, 5).forEach((task) => {
+      blocks.push({
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}`,
+        },
+      });
+
+      // Add "Is it actionable?" buttons
+      blocks.push({
+        type: "actions",
+        elements: [
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "✅ Yes (Actionable)",
+              emoji: true,
+            },
+            style: "primary",
+            value: task.id,
+            action_id: `clarify_actionable_${task.id}`,
+          },
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "❌ No (Not Actionable)",
+              emoji: true,
+            },
+            value: task.id,
+            action_id: `clarify_not_actionable_${task.id}`,
+          },
+        ],
+      });
+    });
+
+    if (inboxTasks.length > 5) {
+      blocks.push({
+        type: "context",
+        elements: [
+          {
+            type: "mrkdwn",
+            text: `_Showing 5 of ${inboxTasks.length} inbox items._`,
+          },
+        ],
+      });
+    }
+
+    blocks.push({
+      type: "divider",
+    });
+  }
 
   // Active tasks section
   if (activeTasks.length > 0) {
@@ -199,6 +263,206 @@ function getPriorityEmoji(priority: string): string {
     default:
       return "⚪";
   }
+}
+
+export function buildNotActionableModal(taskId: string): View {
+  return {
+    type: "modal",
+    callback_id: `not_actionable_modal_${taskId}`,
+    title: {
+      type: "plain_text",
+      text: "Not Actionable",
+      emoji: true,
+    },
+    submit: {
+      type: "plain_text",
+      text: "Confirm",
+      emoji: true,
+    },
+    close: {
+      type: "plain_text",
+      text: "Cancel",
+      emoji: true,
+    },
+    blocks: [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "What would you like to do with this item?",
+        },
+      },
+      {
+        type: "input",
+        block_id: "action_block",
+        element: {
+          type: "radio_buttons",
+          action_id: "action_input",
+          options: [
+            {
+              text: {
+                type: "plain_text",
+                text: "🗑️ Trash (Delete it)",
+                emoji: true,
+              },
+              value: "trash",
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "💭 Someday/Maybe (Review later)",
+                emoji: true,
+              },
+              value: "someday",
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "📚 Reference (Archive for reference)",
+                emoji: true,
+              },
+              value: "reference",
+            },
+          ],
+          initial_option: {
+            text: {
+              type: "plain_text",
+              text: "🗑️ Trash (Delete it)",
+              emoji: true,
+            },
+            value: "trash",
+          },
+        },
+        label: {
+          type: "plain_text",
+          text: "Choose action",
+          emoji: true,
+        },
+      },
+    ],
+  };
+}
+
+export function buildActionableModal(taskId: string): View {
+  return {
+    type: "modal",
+    callback_id: `actionable_modal_${taskId}`,
+    title: {
+      type: "plain_text",
+      text: "Actionable Item",
+      emoji: true,
+    },
+    submit: {
+      type: "plain_text",
+      text: "Confirm",
+      emoji: true,
+    },
+    close: {
+      type: "plain_text",
+      text: "Cancel",
+      emoji: true,
+    },
+    blocks: [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "How would you like to handle this task?",
+        },
+      },
+      {
+        type: "input",
+        block_id: "action_block",
+        element: {
+          type: "radio_buttons",
+          action_id: "action_input",
+          options: [
+            {
+              text: {
+                type: "plain_text",
+                text: "⚡ Do it now (High priority)",
+                emoji: true,
+              },
+              value: "do_now",
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "📝 Do it later (Normal priority)",
+                emoji: true,
+              },
+              value: "do_later",
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "📅 Schedule it (Set due date)",
+                emoji: true,
+              },
+              value: "schedule",
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "⏳ Delegate/Waiting for someone",
+                emoji: true,
+              },
+              value: "delegate",
+            },
+          ],
+          initial_option: {
+            text: {
+              type: "plain_text",
+              text: "📝 Do it later (Normal priority)",
+              emoji: true,
+            },
+            value: "do_later",
+          },
+        },
+        label: {
+          type: "plain_text",
+          text: "Choose action",
+          emoji: true,
+        },
+      },
+      {
+        type: "input",
+        block_id: "due_date_block",
+        element: {
+          type: "datepicker",
+          action_id: "due_date_input",
+          placeholder: {
+            type: "plain_text",
+            text: "Select a date",
+          },
+        },
+        label: {
+          type: "plain_text",
+          text: "Due date (for scheduled tasks)",
+          emoji: true,
+        },
+        optional: true,
+      },
+      {
+        type: "input",
+        block_id: "delegated_to_block",
+        element: {
+          type: "plain_text_input",
+          action_id: "delegated_to_input",
+          placeholder: {
+            type: "plain_text",
+            text: "Enter person's name",
+          },
+        },
+        label: {
+          type: "plain_text",
+          text: "Delegated to (for waiting items)",
+          emoji: true,
+        },
+        optional: true,
+      },
+    ],
+  };
 }
 
 export function buildAddTaskModal(): View {

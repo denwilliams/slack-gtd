@@ -93,6 +93,19 @@ export async function getUserContexts(userId: string) {
     .orderBy(desc(contexts.createdAt));
 }
 
+export async function createContext(userId: string, name: string) {
+  const context = await db
+    .insert(contexts)
+    .values({
+      id: nanoid(8),
+      slackUserId: userId,
+      name,
+    })
+    .returning();
+
+  return context[0];
+}
+
 export async function getTasksDueSoon(hoursAhead: number = 24) {
   const now = new Date();
   const future = new Date(now.getTime() + hoursAhead * 60 * 60 * 1000);

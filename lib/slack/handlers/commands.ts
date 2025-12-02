@@ -3,6 +3,8 @@ import {
   createTask,
   deleteTask,
   getUserTasks,
+  createContext,
+  getUserContexts,
 } from "@/lib/services/tasks";
 import { findOrCreateUser } from "@/lib/services/user";
 
@@ -109,15 +111,57 @@ export async function handleSlashCommand(payload: SlackCommandPayload) {
         };
       }
     }
+
+    case "add-context": {
+      if (!restText) {
+        return {
+          response_type: "ephemeral",
+          text: "Please provide a context name. Usage: `/gtd add-context [name]`\nExample: `/gtd add-context @computer`",
+        };
+      }
+
+      const context = await createContext(user.slackUserId, restText);
+      return {
+        response_type: "ephemeral",
+        text: `✅ Context added: "${context.name}" (ID: ${context.id})`,
+      };
+    }
+
+    case "contexts": {
+      const contexts = await getUserContexts(user.slackUserId);
+      if (contexts.length === 0) {
+        return {
+          response_type: "ephemeral",
+          text: "You have no contexts yet. Add one with `/gtd add-context [name]`",
+        };
+      }
+
+      const contextList = contexts
+        .map((context) => `• ${context.name} (ID: ${context.id})`)
+        .join("\n");
+
+      return {
+        response_type: "ephemeral",
+        text: `*Your contexts:*\n${contextList}`,
+      };
+    }
+
     default: {
       return {
         response_type: "ephemeral",
         text: `*GTD Bot Commands:*
+
+*Tasks:*
 • \`/gtd [task]\` - Quick add a task
 • \`/gtd add [task]\` - Add a new task
 • \`/gtd list\` - List all active tasks
 • \`/gtd complete [task-id]\` - Mark task as complete
 • \`/gtd delete [task-id]\` - Delete a task
+
+*Contexts:*
+• \`/gtd add-context [name]\` - Create a new context (e.g., @computer, @home)
+• \`/gtd contexts\` - List all your contexts
+
 • \`/gtd help\` - Show this help message`,
       };
     }

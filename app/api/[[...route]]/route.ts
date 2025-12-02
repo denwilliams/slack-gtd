@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import { handle } from 'hono/vercel';
 import { handleSlashCommand } from '@/lib/slack/handlers/commands';
+import { handleAppHomeOpened } from '@/lib/slack/handlers/home';
+import { handleInteraction } from '@/lib/slack/handlers/interactions';
 import { getTasksDueSoon } from '@/lib/services/tasks';
 import { sendTaskReminderBatch } from '@/lib/slack/messages';
 
@@ -72,7 +74,14 @@ app.post('/slack/events', async (c) => {
       return c.json({ challenge: body.challenge });
     }
 
-    // TODO: Handle other event types (app_home_opened, etc.)
+    // Handle app_home_opened event
+    if (body.event?.type === 'app_home_opened') {
+      const userId = body.event.user;
+      const teamId = body.team_id;
+      await handleAppHomeOpened(userId, teamId);
+      return c.json({ ok: true });
+    }
+
     return c.json({ ok: true });
   } catch (error) {
     console.error('Error handling event:', error);
@@ -83,8 +92,18 @@ app.post('/slack/events', async (c) => {
 // Slack interactions handler (buttons, modals, shortcuts)
 app.post('/slack/interactions', async (c) => {
   try {
-    // TODO: Implement interactions handler (buttons, modals)
-    return c.json({ ok: true });
+    // Slack sends interactions as form-encoded with a 'payload' field
+    const formData = await c.req.formData();
+    const payloadString = formData.get('payload') as string;
+
+    if (!payloadString) {
+      return c.json({ ok: false, error: 'No payload found' });
+    }
+
+    const payload = JSON.parse(payloadString);
+    const response = await handleInteraction(payload);
+
+    return c.json(response);
   } catch (error) {
     console.error('Error handling interaction:', error);
     return c.json({ ok: false });

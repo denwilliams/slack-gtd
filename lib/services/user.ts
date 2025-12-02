@@ -1,8 +1,11 @@
-import { db } from '@/db';
-import { users } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { and, eq } from "drizzle-orm";
+import { db } from "@/db";
+import { users } from "@/db/schema";
 
-export async function findOrCreateUser(slackUserId: string, slackTeamId: string) {
+export async function findOrCreateUser(
+  slackUserId: string,
+  slackTeamId: string,
+) {
   // Try to find existing user
   const existingUser = await db
     .select()
@@ -10,8 +13,8 @@ export async function findOrCreateUser(slackUserId: string, slackTeamId: string)
     .where(
       and(
         eq(users.slackUserId, slackUserId),
-        eq(users.slackTeamId, slackTeamId)
-      )
+        eq(users.slackTeamId, slackTeamId),
+      ),
     )
     .limit(1);
 

@@ -1,64 +1,66 @@
-import type { tasks } from '@/db/schema';
-import type { KnownBlock, Block } from '@slack/web-api';
+import type { Block, KnownBlock } from "@slack/web-api";
+import type { tasks } from "@/db/schema";
 
 interface HomeView {
-  type: 'home';
+  type: "home";
   blocks: (KnownBlock | Block)[];
 }
 
-export function buildHomeTab(userTasks: Array<typeof tasks.$inferSelect>): HomeView {
-  const activeTasks = userTasks.filter((t) => t.status === 'active');
-  const completedTasks = userTasks.filter((t) => t.status === 'completed');
+export function buildHomeTab(
+  userTasks: Array<typeof tasks.$inferSelect>,
+): HomeView {
+  const activeTasks = userTasks.filter((t) => t.status === "active");
+  const completedTasks = userTasks.filter((t) => t.status === "completed");
 
   const blocks: (KnownBlock | Block)[] = [
     {
-      type: 'header',
+      type: "header",
       text: {
-        type: 'plain_text',
-        text: '📋 Your GTD Tasks',
+        type: "plain_text",
+        text: "📋 Your GTD Tasks",
         emoji: true,
       },
     },
     {
-      type: 'section',
+      type: "section",
       text: {
-        type: 'mrkdwn',
+        type: "mrkdwn",
         text: `You have *${activeTasks.length}* active tasks and *${completedTasks.length}* completed tasks.`,
       },
     },
     {
-      type: 'divider',
+      type: "divider",
     },
   ];
 
   // Active tasks section
   if (activeTasks.length > 0) {
     blocks.push({
-      type: 'header',
+      type: "header",
       text: {
-        type: 'plain_text',
-        text: '✅ Active Tasks',
+        type: "plain_text",
+        text: "✅ Active Tasks",
         emoji: true,
       },
     });
 
     activeTasks.slice(0, 10).forEach((task) => {
       const taskBlock: KnownBlock | Block = {
-        type: 'section',
+        type: "section",
         text: {
-          type: 'mrkdwn',
-          text: `*${task.title}*${task.description ? `\n${task.description}` : ''}${
-            task.dueDate ? `\n📅 Due: ${task.dueDate.toLocaleDateString()}` : ''
-          }\n${getPriorityEmoji(task.priority || 'medium')} ${task.priority || 'medium'} priority`,
+          type: "mrkdwn",
+          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}${
+            task.dueDate ? `\n📅 Due: ${task.dueDate.toLocaleDateString()}` : ""
+          }\n${getPriorityEmoji(task.priority || "medium")} ${task.priority || "medium"} priority`,
         },
         accessory: {
-          type: 'button',
+          type: "button",
           text: {
-            type: 'plain_text',
-            text: 'Complete',
+            type: "plain_text",
+            text: "Complete",
             emoji: true,
           },
-          style: 'primary',
+          style: "primary",
           value: task.id,
           action_id: `complete_task_${task.id}`,
         },
@@ -68,34 +70,34 @@ export function buildHomeTab(userTasks: Array<typeof tasks.$inferSelect>): HomeV
 
       // Add delete button
       blocks.push({
-        type: 'actions',
+        type: "actions",
         elements: [
           {
-            type: 'button',
+            type: "button",
             text: {
-              type: 'plain_text',
-              text: 'Delete',
+              type: "plain_text",
+              text: "Delete",
               emoji: true,
             },
-            style: 'danger',
+            style: "danger",
             value: task.id,
             action_id: `delete_task_${task.id}`,
             confirm: {
               title: {
-                type: 'plain_text',
-                text: 'Are you sure?',
+                type: "plain_text",
+                text: "Are you sure?",
               },
               text: {
-                type: 'mrkdwn',
-                text: 'Do you want to delete this task?',
+                type: "mrkdwn",
+                text: "Do you want to delete this task?",
               },
               confirm: {
-                type: 'plain_text',
-                text: 'Delete',
+                type: "plain_text",
+                text: "Delete",
               },
               deny: {
-                type: 'plain_text',
-                text: 'Cancel',
+                type: "plain_text",
+                text: "Cancel",
               },
             },
           },
@@ -105,10 +107,10 @@ export function buildHomeTab(userTasks: Array<typeof tasks.$inferSelect>): HomeV
 
     if (activeTasks.length > 10) {
       blocks.push({
-        type: 'context',
+        type: "context",
         elements: [
           {
-            type: 'mrkdwn',
+            type: "mrkdwn",
             text: `_Showing 10 of ${activeTasks.length} tasks. Use \`/gtd list\` to see all._`,
           },
         ],
@@ -116,50 +118,50 @@ export function buildHomeTab(userTasks: Array<typeof tasks.$inferSelect>): HomeV
     }
   } else {
     blocks.push({
-      type: 'section',
+      type: "section",
       text: {
-        type: 'mrkdwn',
-        text: '🎉 *No active tasks!* Use `/gtd add [task]` to create one.',
+        type: "mrkdwn",
+        text: "🎉 *No active tasks!* Use `/gtd add [task]` to create one.",
       },
     });
   }
 
   blocks.push({
-    type: 'divider',
+    type: "divider",
   });
 
   // Add task button
   blocks.push({
-    type: 'actions',
+    type: "actions",
     elements: [
       {
-        type: 'button',
+        type: "button",
         text: {
-          type: 'plain_text',
-          text: '➕ Add New Task',
+          type: "plain_text",
+          text: "➕ Add New Task",
           emoji: true,
         },
-        style: 'primary',
-        action_id: 'open_add_task_modal',
+        style: "primary",
+        action_id: "open_add_task_modal",
       },
     ],
   });
 
   return {
-    type: 'home',
+    type: "home",
     blocks,
   };
 }
 
 function getPriorityEmoji(priority: string): string {
   switch (priority) {
-    case 'high':
-      return '🔴';
-    case 'medium':
-      return '🟡';
-    case 'low':
-      return '🟢';
+    case "high":
+      return "🔴";
+    case "medium":
+      return "🟡";
+    case "low":
+      return "🟢";
     default:
-      return '⚪';
+      return "⚪";
   }
 }

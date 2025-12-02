@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
+import { getTasksDueSoon } from "@/lib/services/tasks";
 import { handleSlashCommand } from "@/lib/slack/handlers/commands";
 import { handleAppHomeOpened } from "@/lib/slack/handlers/home";
 import { handleInteraction } from "@/lib/slack/handlers/interactions";
-import { getTasksDueSoon } from "@/lib/services/tasks";
 import { sendTaskReminderBatch } from "@/lib/slack/messages";
 
 // Create the main Hono app

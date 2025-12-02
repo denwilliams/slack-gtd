@@ -1,7 +1,7 @@
-import { getSlackClient } from '@/lib/slack/client';
-import { findOrCreateUser } from '@/lib/services/user';
-import { getUserTasks } from '@/lib/services/tasks';
-import { buildHomeTab } from '@/lib/slack/blocks';
+import { getUserTasks } from "@/lib/services/tasks";
+import { findOrCreateUser } from "@/lib/services/user";
+import { buildHomeTab } from "@/lib/slack/blocks";
+import { getSlackClient } from "@/lib/slack/client";
 
 export async function handleAppHomeOpened(userId: string, teamId: string) {
   try {
@@ -21,7 +21,7 @@ export async function handleAppHomeOpened(userId: string, teamId: string) {
       view,
     });
   } catch (error) {
-    console.error('Error updating home tab:', error);
+    console.error("Error updating home tab:", error);
     throw error;
   }
 }

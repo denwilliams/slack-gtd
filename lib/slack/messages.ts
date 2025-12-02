@@ -1,16 +1,16 @@
-import { getSlackClient } from './client';
-import type { tasks, users } from '@/db/schema';
+import type { tasks, users } from "@/db/schema";
+import { getSlackClient } from "./client";
 
 export async function sendTaskReminder(
   user: typeof users.$inferSelect,
-  task: typeof tasks.$inferSelect
+  task: typeof tasks.$inferSelect,
 ) {
   try {
     const slackClient = getSlackClient();
     await slackClient.chat.postMessage({
       channel: user.slackUserId,
       text: `⏰ Reminder: You have a task due soon!\n\n*${task.title}*${
-        task.description ? `\n${task.description}` : ''
+        task.description ? `\n${task.description}` : ""
       }\n\nDue: ${task.dueDate?.toLocaleString()}`,
     });
     return true;
@@ -24,7 +24,7 @@ export async function sendTaskReminderBatch(
   dueTasks: Array<{
     task: typeof tasks.$inferSelect;
     user: typeof users.$inferSelect;
-  }>
+  }>,
 ) {
   const results = {
     sent: [] as string[],

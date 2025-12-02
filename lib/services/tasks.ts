@@ -1,7 +1,7 @@
-import { db } from '@/db';
-import { tasks, projects, contexts, users } from '@/db/schema';
-import { eq, and, isNull, desc, lte, gte } from 'drizzle-orm';
-import { nanoid } from 'nanoid';
+import { and, desc, eq, gte, lte } from "drizzle-orm";
+import { nanoid } from "nanoid";
+import { db } from "@/db";
+import { contexts, projects, tasks, users } from "@/db/schema";
 
 export async function createTask(
   userId: string,
@@ -11,8 +11,8 @@ export async function createTask(
     projectId?: string;
     contextId?: string;
     dueDate?: Date;
-    priority?: 'high' | 'medium' | 'low';
-  }
+    priority?: "high" | "medium" | "low";
+  },
 ) {
   const task = await db
     .insert(tasks)
@@ -24,15 +24,15 @@ export async function createTask(
       projectId: options?.projectId,
       contextId: options?.contextId,
       dueDate: options?.dueDate,
-      priority: options?.priority || 'medium',
-      status: 'active',
+      priority: options?.priority || "medium",
+      status: "active",
     })
     .returning();
 
   return task[0];
 }
 
-export async function getUserTasks(userId: string, status: string = 'active') {
+export async function getUserTasks(userId: string, status: string = "active") {
   return await db
     .select()
     .from(tasks)
@@ -44,7 +44,7 @@ export async function completeTask(taskId: string, userId: string) {
   const task = await db
     .update(tasks)
     .set({
-      status: 'completed',
+      status: "completed",
       completedAt: new Date(),
       updatedAt: new Date(),
     })
@@ -89,10 +89,10 @@ export async function getTasksDueSoon(hoursAhead: number = 24) {
     .innerJoin(users, eq(tasks.slackUserId, users.slackUserId))
     .where(
       and(
-        eq(tasks.status, 'active'),
+        eq(tasks.status, "active"),
         lte(tasks.dueDate, future),
-        gte(tasks.dueDate, now)
-      )
+        gte(tasks.dueDate, now),
+      ),
     );
 
   return dueTasks;

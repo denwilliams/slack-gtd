@@ -2,12 +2,22 @@ import { drizzle } from 'drizzle-orm/neon-serverless';
 import { Pool } from '@neondatabase/serverless';
 import * as schema from './schema';
 
-if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL environment variable is not set');
+let _db: ReturnType<typeof drizzle> | null = null;
+
+function getDb() {
+  if (!_db) {
+    if (!process.env.DATABASE_URL) {
+      throw new Error('DATABASE_URL environment variable is not set');
+    }
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    _db = drizzle({ client: pool, schema });
+  }
+  return _db;
 }
 
-// Create a connection pool
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-
-// Create the drizzle instance
-export const db = drizzle({ client: pool, schema });
+// Export a proxy that lazily initializes the database
+export const db = new Proxy({} as ReturnType<typeof drizzle>, {
+  get(_target, prop) {
+    return (getDb() as any)[prop];
+  }
+});

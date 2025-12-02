@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import { handle } from 'hono/vercel';
 import { handleSlashCommand } from '@/lib/slack/handlers/commands';
+import { getTasksDueSoon } from '@/lib/services/tasks';
+import { sendTaskReminderBatch } from '@/lib/slack/messages';
 
 // Create the main Hono app
 const app = new Hono().basePath('/api');
@@ -8,6 +10,33 @@ const app = new Hono().basePath('/api');
 // Health check endpoint
 app.get('/health', (c) => {
   return c.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Cron endpoint for sending reminders
+app.get('/cron/reminders', async (c) => {
+  // Verify the cron secret to prevent unauthorized access
+  const authHeader = c.req.header('Authorization');
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+
+  try {
+    // Find tasks due in the next 24 hours
+    const dueTasks = await getTasksDueSoon(24);
+
+    // Send reminders to users
+    const results = await sendTaskReminderBatch(dueTasks);
+
+    return c.json({
+      success: true,
+      remindersSent: results.sent.length,
+      remindersFailed: results.failed.length,
+      tasksChecked: dueTasks.length,
+    });
+  } catch (error) {
+    console.error('Error in cron job:', error);
+    return c.json({ error: 'Internal server error' }, 500);
+  }
 });
 
 // Slack slash command handler

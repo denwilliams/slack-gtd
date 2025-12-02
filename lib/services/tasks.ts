@@ -1,6 +1,6 @@
 import { db } from '@/db';
-import { tasks, projects, contexts } from '@/db/schema';
-import { eq, and, isNull, desc } from 'drizzle-orm';
+import { tasks, projects, contexts, users } from '@/db/schema';
+import { eq, and, isNull, desc, lte, gte } from 'drizzle-orm';
 
 export async function createTask(
   userId: string,
@@ -72,4 +72,26 @@ export async function getUserContexts(userId: string) {
     .from(contexts)
     .where(eq(contexts.userId, userId))
     .orderBy(desc(contexts.createdAt));
+}
+
+export async function getTasksDueSoon(hoursAhead: number = 24) {
+  const now = new Date();
+  const future = new Date(now.getTime() + hoursAhead * 60 * 60 * 1000);
+
+  const dueTasks = await db
+    .select({
+      task: tasks,
+      user: users,
+    })
+    .from(tasks)
+    .innerJoin(users, eq(tasks.userId, users.id))
+    .where(
+      and(
+        eq(tasks.status, 'active'),
+        lte(tasks.dueDate, future),
+        gte(tasks.dueDate, now)
+      )
+    );
+
+  return dueTasks;
 }

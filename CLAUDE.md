@@ -74,5 +74,19 @@ This codebase is in early stages. When implementing:
 - Handle cold starts gracefully (Vercel has fast cold starts, Neon has instant connection)
 - Implement proper timeout handling for Slack's 3-second response requirement
 - Use deferred responses for long-running operations
-- Use Vercel Cron Jobs (via separate API routes) for reminder system
 - Hono with Vercel adapter works seamlessly on Vercel Functions
+
+## Vercel Cron Jobs for Reminders
+
+- Configure cron schedules in `vercel.json` under the `crons` array
+- Create a separate API route (e.g., `app/api/cron/reminders/route.ts`) for the cron handler
+- **Security**: Always verify the `CRON_SECRET` from Authorization header to prevent DOS attacks:
+  ```typescript
+  if (req.headers.get('Authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).end('Unauthorized');
+  }
+  ```
+- Set `CRON_SECRET` environment variable in Vercel dashboard
+- Example cron schedule: `"0 9 * * *"` runs daily at 9 AM UTC
+- Cron jobs on Vercel are only available on Pro and Enterprise plans
+- For testing locally, manually invoke the cron endpoint with Authorization header

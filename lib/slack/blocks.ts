@@ -101,7 +101,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             type: "button",
             text: {
               type: "plain_text",
-              text: "✅ Yes (Actionable)",
+              text: "Yes",
               emoji: true,
             },
             style: "primary",
@@ -112,9 +112,10 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             type: "button",
             text: {
               type: "plain_text",
-              text: "❌ No (Not Actionable)",
+              text: "No",
               emoji: true,
             },
+            style: "danger",
             value: task.id,
             action_id: `clarify_not_actionable_${task.id}`,
           },
@@ -666,7 +667,15 @@ export function buildActionableModal(taskId: string): View {
             {
               text: {
                 type: "plain_text",
-                text: "⚡ Do it now (High priority)",
+                text: "⏳ Someone else can do it - Delegate/Waiting for someone",
+                emoji: true,
+              },
+              value: "delegate",
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "⚡ I can do it now quickly (<2 minutes)",
                 emoji: true,
               },
               value: "do_now",
@@ -674,7 +683,7 @@ export function buildActionableModal(taskId: string): View {
             {
               text: {
                 type: "plain_text",
-                text: "📝 Do it later (Normal priority)",
+                text: "📝 Do it later (> 2 minutes)",
                 emoji: true,
               },
               value: "do_later",
@@ -687,19 +696,11 @@ export function buildActionableModal(taskId: string): View {
               },
               value: "schedule",
             },
-            {
-              text: {
-                type: "plain_text",
-                text: "⏳ Delegate/Waiting for someone",
-                emoji: true,
-              },
-              value: "delegate",
-            },
           ],
           initial_option: {
             text: {
               type: "plain_text",
-              text: "📝 Do it later (Normal priority)",
+              text: "📝 Do it later (> 2 minutes)",
               emoji: true,
             },
             value: "do_later",

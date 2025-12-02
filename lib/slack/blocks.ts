@@ -1,4 +1,4 @@
-import type { Block, KnownBlock } from "@slack/web-api";
+import type { Block, KnownBlock, View } from "@slack/web-api";
 import type { tasks } from "@/db/schema";
 
 interface HomeView {
@@ -164,4 +164,116 @@ function getPriorityEmoji(priority: string): string {
     default:
       return "⚪";
   }
+}
+
+export function buildAddTaskModal(): View {
+  return {
+    type: "modal",
+    callback_id: "add_task_modal",
+    title: {
+      type: "plain_text",
+      text: "Add New Task",
+      emoji: true,
+    },
+    submit: {
+      type: "plain_text",
+      text: "Create",
+      emoji: true,
+    },
+    close: {
+      type: "plain_text",
+      text: "Cancel",
+      emoji: true,
+    },
+    blocks: [
+      {
+        type: "input",
+        block_id: "task_title_block",
+        element: {
+          type: "plain_text_input",
+          action_id: "task_title_input",
+          placeholder: {
+            type: "plain_text",
+            text: "Enter task title",
+          },
+          max_length: 500,
+        },
+        label: {
+          type: "plain_text",
+          text: "Task Title",
+          emoji: true,
+        },
+      },
+      {
+        type: "input",
+        block_id: "task_description_block",
+        element: {
+          type: "plain_text_input",
+          action_id: "task_description_input",
+          multiline: true,
+          placeholder: {
+            type: "plain_text",
+            text: "Add more details (optional)",
+          },
+        },
+        label: {
+          type: "plain_text",
+          text: "Description",
+          emoji: true,
+        },
+        optional: true,
+      },
+      {
+        type: "input",
+        block_id: "task_priority_block",
+        element: {
+          type: "static_select",
+          action_id: "task_priority_input",
+          placeholder: {
+            type: "plain_text",
+            text: "Select priority",
+          },
+          options: [
+            {
+              text: {
+                type: "plain_text",
+                text: "🔴 High",
+                emoji: true,
+              },
+              value: "high",
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "🟡 Medium",
+                emoji: true,
+              },
+              value: "medium",
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "🟢 Low",
+                emoji: true,
+              },
+              value: "low",
+            },
+          ],
+          initial_option: {
+            text: {
+              type: "plain_text",
+              text: "🟡 Medium",
+              emoji: true,
+            },
+            value: "medium",
+          },
+        },
+        label: {
+          type: "plain_text",
+          text: "Priority",
+          emoji: true,
+        },
+      },
+    ],
+  };
 }

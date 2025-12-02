@@ -405,7 +405,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}${task.delegatedTo ? `\n👤 Waiting for: ${task.delegatedTo}` : ""}`,
+          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}`,
         },
         accessory: {
           type: "overflow",
@@ -422,6 +422,19 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
           action_id: `task_overflow_${task.id}`,
         },
       });
+
+      // Add context with delegated person
+      if (task.delegatedTo) {
+        blocks.push({
+          type: "context",
+          elements: [
+            {
+              type: "mrkdwn" as const,
+              text: `👤 Waiting for: ${task.delegatedTo}`,
+            },
+          ],
+        });
+      }
 
       blocks.push({
         type: "actions",

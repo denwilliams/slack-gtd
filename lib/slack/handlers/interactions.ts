@@ -38,7 +38,14 @@ interface InteractionPayload {
     state: {
       values: Record<
         string,
-        Record<string, { value?: string; selected_option?: { value: string } }>
+        Record<
+          string,
+          {
+            value?: string;
+            selected_option?: { value: string };
+            selected_date?: string;
+          }
+        >
       >;
     };
   };

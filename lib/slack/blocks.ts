@@ -157,7 +157,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
           type: "mrkdwn",
           text: `*${task.title}*${task.description ? `\n${task.description}` : ""}${
             task.dueDate ? `\n📅 Due: ${task.dueDate.toLocaleDateString()}` : ""
-          }\n${getPriorityEmoji(task.priority || "medium")} ${task.priority || "medium"} priority`,
+          }`, // \n${getPriorityEmoji(task.priority || "medium")} ${task.priority || "medium"} priority`,
         },
         accessory: {
           type: "button",
@@ -297,7 +297,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}\n📅 Due: ${task.dueDate!.toLocaleDateString()}\n${getPriorityEmoji(task.priority || "medium")} ${task.priority || "medium"} priority`,
+          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}\n📅 Due: ${task.dueDate!.toLocaleDateString()}`, // \n${getPriorityEmoji(task.priority || "medium")} ${task.priority || "medium"} priority`,
         },
         accessory: {
           type: "button",

@@ -174,7 +174,8 @@ export async function handleInteraction(payload: InteractionPayload) {
 
     // Handle overflow menu (delete)
     if (action.action_id.startsWith("task_overflow_")) {
-      const taskId = action.value!;
+      // For overflow menus, the task ID is in selected_option.value
+      const taskId = action.selected_option?.value!;
       // The selected option will be to delete
       await deleteTask(taskId, user.slackUserId);
 

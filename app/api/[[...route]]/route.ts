@@ -3,9 +3,16 @@ import { handle } from 'hono/vercel';
 import { handleSlashCommand } from '@/lib/slack/handlers/commands';
 import { getTasksDueSoon } from '@/lib/services/tasks';
 import { sendTaskReminderBatch } from '@/lib/slack/messages';
+import { ensureSchema } from '@/db/migrate';
 
 // Create the main Hono app
 const app = new Hono().basePath('/api');
+
+// Middleware to ensure schema is initialized on first request
+app.use('*', async (_c, next) => {
+  await ensureSchema();
+  await next();
+});
 
 // Health check endpoint
 app.get('/health', (c) => {

@@ -35,6 +35,21 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
       },
     },
     {
+      type: "actions",
+      elements: [
+        {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "➕ Add New Task",
+            emoji: true,
+          },
+          style: "primary",
+          action_id: "open_add_task_modal",
+        },
+      ],
+    },
+    {
       type: "section",
       text: {
         type: "mrkdwn",
@@ -504,23 +519,6 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
       type: "divider",
     });
   }
-
-  // Add task button
-  blocks.push({
-    type: "actions",
-    elements: [
-      {
-        type: "button",
-        text: {
-          type: "plain_text",
-          text: "➕ Add New Task",
-          emoji: true,
-        },
-        style: "primary",
-        action_id: "open_add_task_modal",
-      },
-    ],
-  });
 
   return {
     type: "home",

@@ -155,9 +155,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}${
-            task.dueDate ? `\n📅 Due: ${task.dueDate.toLocaleDateString()}` : ""
-          }`, // \n${getPriorityEmoji(task.priority || "medium")} ${task.priority || "medium"} priority`,
+          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}`,
         },
         accessory: {
           type: "overflow",
@@ -176,6 +174,24 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
       };
 
       blocks.push(taskBlock);
+
+      // Add context with due date and priority
+      const contextElements: { type: "mrkdwn"; text: string }[] = [];
+      if (task.dueDate) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: `📅 ${task.dueDate.toLocaleDateString()}`,
+        });
+      }
+      contextElements.push({
+        type: "mrkdwn" as const,
+        text: `${getPriorityEmoji(task.priority || "medium")} ${task.priority || "medium"}`,
+      });
+
+      blocks.push({
+        type: "context",
+        elements: contextElements,
+      });
 
       // Add priority, move, and complete buttons
       blocks.push({
@@ -282,7 +298,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}\n📅 Due: ${task.dueDate!.toLocaleDateString()}`, // \n${getPriorityEmoji(task.priority || "medium")} ${task.priority || "medium"} priority`,
+          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}`,
         },
         accessory: {
           type: "overflow",
@@ -298,6 +314,21 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
           ],
           action_id: `task_overflow_${task.id}`,
         },
+      });
+
+      // Add context with due date and priority
+      blocks.push({
+        type: "context",
+        elements: [
+          {
+            type: "mrkdwn" as const,
+            text: `📅 ${task.dueDate!.toLocaleDateString()}`,
+          },
+          {
+            type: "mrkdwn" as const,
+            text: `${getPriorityEmoji(task.priority || "medium")} ${task.priority || "medium"}`,
+          },
+        ],
       });
 
       blocks.push({

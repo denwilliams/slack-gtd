@@ -1,10 +1,16 @@
 import type { tasks } from '@/db/schema';
+import type { KnownBlock, Block } from '@slack/web-api';
 
-export function buildHomeTab(userTasks: Array<typeof tasks.$inferSelect>): any {
+interface HomeView {
+  type: 'home';
+  blocks: (KnownBlock | Block)[];
+}
+
+export function buildHomeTab(userTasks: Array<typeof tasks.$inferSelect>): HomeView {
   const activeTasks = userTasks.filter((t) => t.status === 'active');
   const completedTasks = userTasks.filter((t) => t.status === 'completed');
 
-  const blocks: any[] = [
+  const blocks: (KnownBlock | Block)[] = [
     {
       type: 'header',
       text: {
@@ -37,7 +43,7 @@ export function buildHomeTab(userTasks: Array<typeof tasks.$inferSelect>): any {
     });
 
     activeTasks.slice(0, 10).forEach((task) => {
-      const taskBlock: any = {
+      const taskBlock: KnownBlock | Block = {
         type: 'section',
         text: {
           type: 'mrkdwn',

@@ -53,3 +53,84 @@ A Slack bot that helps you implement the Getting Things Done (GTD) methodology b
 - Drizzle ORM
 - Neon (serverless PostgreSQL)
 - Vercel (serverless deployment)
+
+## Setup Instructions
+
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Set Up Neon Database
+
+1. Create a Neon database at [neon.tech](https://neon.tech)
+2. Copy the connection string
+
+### 3. Configure Environment Variables
+
+Create a `.env.local` file in the root directory:
+
+```bash
+# Slack Bot Configuration
+SLACK_BOT_TOKEN=xoxb-your-bot-token
+SLACK_SIGNING_SECRET=your-signing-secret
+
+# Neon Database
+DATABASE_URL=postgres://username:password@hostname/database?sslmode=require
+```
+
+### 4. Run Database Migrations
+
+```bash
+npm run db:generate
+npm run db:push
+```
+
+### 5. Set Up Slack App
+
+1. Go to [api.slack.com/apps](https://api.slack.com/apps) and create a new app
+2. Under **OAuth & Permissions**, add these Bot Token Scopes:
+   - `commands`
+   - `chat:write`
+   - `users:read`
+3. Under **Slash Commands**, create a command:
+   - Command: `/gtd`
+   - Request URL: `https://your-app.vercel.app/api/slack/commands`
+   - Description: "Manage your GTD tasks"
+4. Under **Event Subscriptions**, enable events:
+   - Request URL: `https://your-app.vercel.app/api/slack/events`
+5. Under **Interactivity & Shortcuts**, enable interactivity:
+   - Request URL: `https://your-app.vercel.app/api/slack/interactions`
+6. Install the app to your workspace and copy the Bot Token
+
+### 6. Run Development Server
+
+```bash
+npm run dev
+```
+
+Visit [http://localhost:3000](http://localhost:3000) to see the landing page.
+
+### 7. Deploy to Vercel
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel
+
+# Set environment variables in Vercel dashboard
+# Then deploy to production
+vercel --prod
+```
+
+## Available Commands
+
+- `/gtd [task]` - Quick add a task
+- `/gtd add [task]` - Add a new task
+- `/gtd list` - List all active tasks
+- `/gtd complete [task-id]` - Mark task as complete
+- `/gtd delete [task-id]` - Delete a task
+- `/gtd help` - Show help message

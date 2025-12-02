@@ -1,0 +1,37 @@
+# Slack App Manifest for GTD Bot
+# Use this to quickly create your Slack app
+# Replace YOUR_VERCEL_URL with your actual Vercel deployment URL
+
+display_information:
+  name: GTD Bot
+  description: A bot to help you implement the Getting Things Done methodology
+  background_color: "#2c2d30"
+features:
+  bot_user:
+    display_name: GTD Bot
+    always_online: true
+  slash_commands:
+    - command: /gtd
+      url: https://YOUR_VERCEL_URL/api/slack/commands
+      description: Manage your GTD tasks
+      usage_hint: "[add|list|complete|delete|help] [task or task-id]"
+      should_escape: false
+oauth_config:
+  scopes:
+    bot:
+      - commands
+      - chat:write
+      - users:read
+      - app_mentions:read
+settings:
+  event_subscriptions:
+    request_url: https://YOUR_VERCEL_URL/api/slack/events
+    bot_events:
+      - app_mention
+      - app_home_opened
+  interactivity:
+    is_enabled: true
+    request_url: https://YOUR_VERCEL_URL/api/slack/interactions
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false

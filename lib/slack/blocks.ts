@@ -22,8 +22,8 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
   } = tasksByStatus;
 
   // Separate active tasks into scheduled (with due date) and next actions (without due date)
-  const scheduledTasks = allActiveTasks.filter((t) => t.dueDate);
-  const nextActionTasks = allActiveTasks.filter((t) => !t.dueDate);
+  const scheduledTasks = allActiveTasks.filter((t) => t.dueDate && t.dueDate.getTime() > Date.now());
+  const nextActionTasks = allActiveTasks.filter((t) => !t.dueDate || t.dueDate.getTime() <= Date.now());
 
   // Sort next actions and scheduled tasks
   nextActionTasks.sort((a: typeof tasks.$inferSelect, b: typeof tasks.$inferSelect) => {

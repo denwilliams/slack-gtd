@@ -9,7 +9,7 @@ export async function handleAppHomeOpened(userId: string, teamId: string) {
     const user = await findOrCreateUser(userId, teamId);
 
     // Get user's tasks
-    const tasks = await getUserTasks(user.id);
+    const tasks = await getUserTasks(user.slackUserId);
 
     // Build home tab view
     const view = buildHomeTab(tasks);

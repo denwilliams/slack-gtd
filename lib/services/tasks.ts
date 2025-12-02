@@ -1,6 +1,7 @@
 import { db } from '@/db';
 import { tasks, projects, contexts, users } from '@/db/schema';
 import { eq, and, isNull, desc, lte, gte } from 'drizzle-orm';
+import { nanoid } from 'nanoid';
 
 export async function createTask(
   userId: string,
@@ -16,7 +17,8 @@ export async function createTask(
   const task = await db
     .insert(tasks)
     .values({
-      userId,
+      id: nanoid(8), // 8 character short ID
+      slackUserId: userId,
       title,
       description: options?.description,
       projectId: options?.projectId,
@@ -34,7 +36,7 @@ export async function getUserTasks(userId: string, status: string = 'active') {
   return await db
     .select()
     .from(tasks)
-    .where(and(eq(tasks.userId, userId), eq(tasks.status, status)))
+    .where(and(eq(tasks.slackUserId, userId), eq(tasks.status, status)))
     .orderBy(desc(tasks.createdAt));
 }
 
@@ -46,7 +48,7 @@ export async function completeTask(taskId: string, userId: string) {
       completedAt: new Date(),
       updatedAt: new Date(),
     })
-    .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+    .where(and(eq(tasks.id, taskId), eq(tasks.slackUserId, userId)))
     .returning();
 
   return task[0];
@@ -55,14 +57,14 @@ export async function completeTask(taskId: string, userId: string) {
 export async function deleteTask(taskId: string, userId: string) {
   await db
     .delete(tasks)
-    .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)));
+    .where(and(eq(tasks.id, taskId), eq(tasks.slackUserId, userId)));
 }
 
 export async function getUserProjects(userId: string) {
   return await db
     .select()
     .from(projects)
-    .where(eq(projects.userId, userId))
+    .where(eq(projects.slackUserId, userId))
     .orderBy(desc(projects.createdAt));
 }
 
@@ -70,7 +72,7 @@ export async function getUserContexts(userId: string) {
   return await db
     .select()
     .from(contexts)
-    .where(eq(contexts.userId, userId))
+    .where(eq(contexts.slackUserId, userId))
     .orderBy(desc(contexts.createdAt));
 }
 
@@ -84,7 +86,7 @@ export async function getTasksDueSoon(hoursAhead: number = 24) {
       user: users,
     })
     .from(tasks)
-    .innerJoin(users, eq(tasks.userId, users.id))
+    .innerJoin(users, eq(tasks.slackUserId, users.slackUserId))
     .where(
       and(
         eq(tasks.status, 'active'),

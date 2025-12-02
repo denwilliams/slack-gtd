@@ -32,7 +32,7 @@ export async function handleSlashCommand(payload: SlackCommandPayload) {
         };
       }
 
-      const task = await createTask(user.id, taskTitle);
+      const task = await createTask(user.slackUserId, taskTitle);
       return {
         response_type: 'ephemeral',
         text: `✅ Task added: "${task.title}"`,
@@ -40,7 +40,7 @@ export async function handleSlashCommand(payload: SlackCommandPayload) {
     }
 
     case 'list': {
-      const tasks = await getUserTasks(user.id);
+      const tasks = await getUserTasks(user.slackUserId);
       if (tasks.length === 0) {
         return {
           response_type: 'ephemeral',
@@ -67,7 +67,7 @@ export async function handleSlashCommand(payload: SlackCommandPayload) {
       }
 
       try {
-        const task = await completeTask(restText, user.id);
+        const task = await completeTask(restText, user.slackUserId);
         return {
           response_type: 'ephemeral',
           text: `✅ Task completed: "${task.title}"`,
@@ -89,7 +89,7 @@ export async function handleSlashCommand(payload: SlackCommandPayload) {
       }
 
       try {
-        await deleteTask(restText, user.id);
+        await deleteTask(restText, user.slackUserId);
         return {
           response_type: 'ephemeral',
           text: '🗑️ Task deleted.',

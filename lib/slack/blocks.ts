@@ -68,10 +68,45 @@ export function buildHomeTab(
 
       blocks.push(taskBlock);
 
-      // Add delete button
+      // Add priority and delete buttons
       blocks.push({
         type: "actions",
         elements: [
+          {
+            type: "static_select",
+            placeholder: {
+              type: "plain_text",
+              text: "Change priority",
+              emoji: true,
+            },
+            options: [
+              {
+                text: {
+                  type: "plain_text",
+                  text: "🔴 High",
+                  emoji: true,
+                },
+                value: "high",
+              },
+              {
+                text: {
+                  type: "plain_text",
+                  text: "🟡 Medium",
+                  emoji: true,
+                },
+                value: "medium",
+              },
+              {
+                text: {
+                  type: "plain_text",
+                  text: "🟢 Low",
+                  emoji: true,
+                },
+                value: "low",
+              },
+            ],
+            action_id: `change_priority_${task.id}`,
+          },
           {
             type: "button",
             text: {

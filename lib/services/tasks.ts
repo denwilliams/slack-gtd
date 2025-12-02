@@ -60,6 +60,23 @@ export async function deleteTask(taskId: string, userId: string) {
     .where(and(eq(tasks.id, taskId), eq(tasks.slackUserId, userId)));
 }
 
+export async function updateTaskPriority(
+  taskId: string,
+  userId: string,
+  priority: "high" | "medium" | "low",
+) {
+  const task = await db
+    .update(tasks)
+    .set({
+      priority,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(tasks.id, taskId), eq(tasks.slackUserId, userId)))
+    .returning();
+
+  return task[0];
+}
+
 export async function getUserProjects(userId: string) {
   return await db
     .select()

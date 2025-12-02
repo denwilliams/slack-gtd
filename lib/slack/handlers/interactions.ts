@@ -1,4 +1,9 @@
-import { completeTask, deleteTask, createTask } from "@/lib/services/tasks";
+import {
+  completeTask,
+  deleteTask,
+  createTask,
+  updateTaskPriority,
+} from "@/lib/services/tasks";
 import { findOrCreateUser } from "@/lib/services/user";
 import { refreshHomeTab } from "./home";
 import { getSlackClient } from "@/lib/slack/client";
@@ -7,7 +12,10 @@ import { buildAddTaskModal } from "@/lib/slack/blocks";
 interface BlockAction {
   type: string;
   action_id: string;
-  value: string;
+  value?: string;
+  selected_option?: {
+    value: string;
+  };
 }
 
 interface InteractionPayload {
@@ -73,7 +81,7 @@ export async function handleInteraction(payload: InteractionPayload) {
 
     // Handle complete task button
     if (action.action_id.startsWith("complete_task_")) {
-      const taskId = action.value;
+      const taskId = action.value!;
       await completeTask(taskId, user.slackUserId);
 
       // Refresh home tab
@@ -87,11 +95,32 @@ export async function handleInteraction(payload: InteractionPayload) {
 
     // Handle delete task button
     if (action.action_id.startsWith("delete_task_")) {
-      const taskId = action.value;
+      const taskId = action.value!;
       await deleteTask(taskId, user.slackUserId);
 
       // Refresh home tab
       await refreshHomeTab(user.slackUserId, slackTeam.id);
+
+      return {
+        response_action: "update",
+        view: {},
+      };
+    }
+
+    // Handle change priority
+    if (action.action_id.startsWith("change_priority_")) {
+      const taskId = action.action_id.replace("change_priority_", "");
+      const priority = action.selected_option?.value as
+        | "high"
+        | "medium"
+        | "low";
+
+      if (priority) {
+        await updateTaskPriority(taskId, user.slackUserId, priority);
+
+        // Refresh home tab
+        await refreshHomeTab(user.slackUserId, slackTeam.id);
+      }
 
       return {
         response_action: "update",

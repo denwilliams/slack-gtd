@@ -147,7 +147,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
 
       blocks.push(taskBlock);
 
-      // Add priority and delete buttons
+      // Add priority, move, and delete buttons
       blocks.push({
         type: "actions",
         elements: [
@@ -185,6 +185,16 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
               },
             ],
             action_id: `change_priority_${task.id}`,
+          },
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "Move",
+              emoji: true,
+            },
+            value: task.id,
+            action_id: `move_task_${task.id}`,
           },
           {
             type: "button",
@@ -723,6 +733,112 @@ export function buildActionableModal(taskId: string): View {
         label: {
           type: "plain_text",
           text: "Delegated to (for waiting items)",
+          emoji: true,
+        },
+        optional: true,
+      },
+    ],
+  };
+}
+
+export function buildMoveTaskModal(taskId: string): View {
+  return {
+    type: "modal",
+    callback_id: `move_task_modal_${taskId}`,
+    title: {
+      type: "plain_text",
+      text: "Move Task",
+      emoji: true,
+    },
+    submit: {
+      type: "plain_text",
+      text: "Move",
+      emoji: true,
+    },
+    close: {
+      type: "plain_text",
+      text: "Cancel",
+      emoji: true,
+    },
+    blocks: [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "Where would you like to move this task?",
+        },
+      },
+      {
+        type: "input",
+        block_id: "move_to_block",
+        element: {
+          type: "radio_buttons",
+          action_id: "move_to_input",
+          options: [
+            {
+              text: {
+                type: "plain_text",
+                text: "📅 Scheduled (set due date)",
+                emoji: true,
+              },
+              value: "scheduled",
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "⏳ Waiting For (delegate)",
+                emoji: true,
+              },
+              value: "waiting",
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "💭 Someday/Maybe",
+                emoji: true,
+              },
+              value: "someday",
+            },
+          ],
+        },
+        label: {
+          type: "plain_text",
+          text: "Move to",
+          emoji: true,
+        },
+      },
+      {
+        type: "input",
+        block_id: "due_date_block",
+        element: {
+          type: "datepicker",
+          action_id: "due_date_input",
+          placeholder: {
+            type: "plain_text",
+            text: "Select a date",
+          },
+        },
+        label: {
+          type: "plain_text",
+          text: "Due date (for Scheduled)",
+          emoji: true,
+        },
+        optional: true,
+      },
+      {
+        type: "input",
+        block_id: "delegated_to_block",
+        element: {
+          type: "plain_text_input",
+          action_id: "delegated_to_input",
+          placeholder: {
+            type: "plain_text",
+            text: "Enter person's name",
+          },
+        },
+        label: {
+          type: "plain_text",
+          text: "Delegated to (for Waiting For)",
           emoji: true,
         },
         optional: true,

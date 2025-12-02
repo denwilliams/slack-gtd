@@ -12,6 +12,7 @@ import {
   buildAddTaskModal,
   buildActionableModal,
   buildNotActionableModal,
+  buildMoveTaskModal,
 } from "@/lib/slack/blocks";
 
 interface BlockAction {
@@ -157,6 +158,20 @@ export async function handleInteraction(payload: InteractionPayload) {
       };
     }
 
+    // Handle move task button
+    if (action.action_id.startsWith("move_task_")) {
+      const taskId = action.action_id.replace("move_task_", "");
+      const slack = getSlackClient();
+      const modalView = buildMoveTaskModal(taskId);
+
+      await slack.views.open({
+        trigger_id: payload.trigger_id!,
+        view: modalView,
+      });
+
+      return { ok: true };
+    }
+
     // Handle clarify actionable button
     if (action.action_id.startsWith("clarify_actionable_")) {
       const taskId = action.action_id.replace("clarify_actionable_", "");
@@ -255,6 +270,41 @@ export async function handleInteraction(payload: InteractionPayload) {
       await clarifyTask(taskId, user.slackUserId, {
         status: "waiting",
         delegatedTo: delegatedTo || undefined,
+      });
+    }
+
+    // Refresh home tab
+    await refreshHomeTab(user.slackUserId, slackTeam.id);
+
+    return {
+      response_action: "clear",
+    };
+  }
+
+  // Handle move task modal submission
+  if (
+    type === "view_submission" &&
+    view?.callback_id.startsWith("move_task_modal_")
+  ) {
+    const taskId = view.callback_id.replace("move_task_modal_", "");
+    const values = view.state.values;
+    const moveTo = values.move_to_block.move_to_input.selected_option?.value;
+    const dueDate = values.due_date_block?.due_date_input?.selected_date;
+    const delegatedTo = values.delegated_to_block?.delegated_to_input?.value;
+
+    if (moveTo === "scheduled") {
+      await clarifyTask(taskId, user.slackUserId, {
+        status: "active",
+        dueDate: dueDate ? new Date(dueDate) : new Date(),
+      });
+    } else if (moveTo === "waiting") {
+      await clarifyTask(taskId, user.slackUserId, {
+        status: "waiting",
+        delegatedTo: delegatedTo || undefined,
+      });
+    } else if (moveTo === "someday") {
+      await clarifyTask(taskId, user.slackUserId, {
+        status: "someday",
       });
     }
 

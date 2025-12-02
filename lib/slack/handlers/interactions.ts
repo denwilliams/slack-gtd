@@ -1,5 +1,6 @@
 import { completeTask, deleteTask } from '@/lib/services/tasks';
 import { refreshHomeTab } from './home';
+import { findOrCreateUser } from '@/lib/services/user';
 
 interface BlockAction {
   type: string;
@@ -20,8 +21,10 @@ interface InteractionPayload {
 }
 
 export async function handleInteraction(payload: InteractionPayload) {
-  const { user, team, actions, type } = payload;
+  const { user: slackUser, team: slackTeam, actions, type } = payload;
 
+  const user = await findOrCreateUser(slackUser.id, slackTeam.id);
+  
   if (type === 'block_actions' && actions && actions.length > 0) {
     const action = actions[0];
 
@@ -31,7 +34,7 @@ export async function handleInteraction(payload: InteractionPayload) {
       await completeTask(taskId, user.id);
 
       // Refresh home tab
-      await refreshHomeTab(user.id, team.id);
+      await refreshHomeTab(user.id, slackTeam.id);
 
       return {
         response_action: 'update',
@@ -45,7 +48,7 @@ export async function handleInteraction(payload: InteractionPayload) {
       await deleteTask(taskId, user.id);
 
       // Refresh home tab
-      await refreshHomeTab(user.id, team.id);
+      await refreshHomeTab(user.id, slackTeam.id);
 
       return {
         response_action: 'update',

@@ -170,7 +170,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             type: "static_select",
             placeholder: {
               type: "plain_text",
-              text: "Change priority",
+              text: `${getPriorityEmoji(task.priority || "medium")} ${task.priority || "medium"}`,
               emoji: true,
             },
             options: [
@@ -307,7 +307,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             type: "static_select",
             placeholder: {
               type: "plain_text",
-              text: "Change priority",
+              text: `${getPriorityEmoji(task.priority || "medium")} ${task.priority || "medium"}`,
               emoji: true,
             },
             options: [

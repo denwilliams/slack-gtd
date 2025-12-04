@@ -250,55 +250,10 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         elements: contextElements,
       });
 
-      // Add priority, move, and complete buttons
+      // Add complete button
       blocks.push({
         type: "actions",
         elements: [
-          {
-            type: "static_select",
-            placeholder: {
-              type: "plain_text",
-              text: `${getPriorityEmoji(task.priority || "medium")} ${task.priority || "medium"}`,
-              emoji: true,
-            },
-            options: [
-              {
-                text: {
-                  type: "plain_text",
-                  text: "🔴 High",
-                  emoji: true,
-                },
-                value: "high",
-              },
-              {
-                text: {
-                  type: "plain_text",
-                  text: "🟡 Medium",
-                  emoji: true,
-                },
-                value: "medium",
-              },
-              {
-                text: {
-                  type: "plain_text",
-                  text: "🟢 Low",
-                  emoji: true,
-                },
-                value: "low",
-              },
-            ],
-            action_id: `change_priority_${task.id}`,
-          },
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "Move",
-              emoji: true,
-            },
-            value: task.id,
-            action_id: `move_task_${task.id}`,
-          },
           {
             type: "button",
             text: {
@@ -423,41 +378,6 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
       blocks.push({
         type: "actions",
         elements: [
-          {
-            type: "static_select",
-            placeholder: {
-              type: "plain_text",
-              text: `${getPriorityEmoji(task.priority || "medium")} ${task.priority || "medium"}`,
-              emoji: true,
-            },
-            options: [
-              {
-                text: {
-                  type: "plain_text",
-                  text: "🔴 High",
-                  emoji: true,
-                },
-                value: "high",
-              },
-              {
-                text: {
-                  type: "plain_text",
-                  text: "🟡 Medium",
-                  emoji: true,
-                },
-                value: "medium",
-              },
-              {
-                text: {
-                  type: "plain_text",
-                  text: "🟢 Low",
-                  emoji: true,
-                },
-                value: "low",
-              },
-            ],
-            action_id: `change_priority_${task.id}`,
-          },
           {
             type: "button",
             text: {

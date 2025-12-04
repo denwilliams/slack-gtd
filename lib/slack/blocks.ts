@@ -1,16 +1,22 @@
 import type { Block, KnownBlock, View } from "@slack/web-api";
-import type { tasks } from "@/db/schema";
+import type { tasks, projects, contexts } from "@/db/schema";
 
 interface HomeView {
   type: "home";
   blocks: (KnownBlock | Block)[];
 }
 
+interface TaskWithRelations {
+  task: typeof tasks.$inferSelect;
+  project: typeof projects.$inferSelect | null;
+  context: typeof contexts.$inferSelect | null;
+}
+
 interface GTDTasks {
-  inbox: Array<typeof tasks.$inferSelect>;
-  active: Array<typeof tasks.$inferSelect>;
-  waiting: Array<typeof tasks.$inferSelect>;
-  someday: Array<typeof tasks.$inferSelect>;
+  inbox: Array<TaskWithRelations>;
+  active: Array<TaskWithRelations>;
+  waiting: Array<TaskWithRelations>;
+  someday: Array<TaskWithRelations>;
 }
 
 export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
@@ -22,32 +28,32 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
   } = tasksByStatus;
 
   // Separate active tasks into scheduled (with due date) and next actions (without due date)
-  const scheduledTasks = allActiveTasks.filter((t) => t.dueDate && t.dueDate.getTime() > Date.now());
-  const nextActionTasks = allActiveTasks.filter((t) => !t.dueDate || t.dueDate.getTime() <= Date.now());
+  const scheduledTasks = allActiveTasks.filter((t) => t.task.dueDate && t.task.dueDate.getTime() > Date.now());
+  const nextActionTasks = allActiveTasks.filter((t) => !t.task.dueDate || t.task.dueDate.getTime() <= Date.now());
 
   // Sort next actions and scheduled tasks
-  nextActionTasks.sort((a: typeof tasks.$inferSelect, b: typeof tasks.$inferSelect) => {
+  nextActionTasks.sort((a: TaskWithRelations, b: TaskWithRelations) => {
     // Sort function: priority first (high > medium > low), then oldest first
     const priorityOrder = { high: 0, medium: 1, low: 2 };
-    const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] ?? 1;
-    const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] ?? 1;
+    const aPriority = priorityOrder[a.task.priority as keyof typeof priorityOrder] ?? 1;
+    const bPriority = priorityOrder[b.task.priority as keyof typeof priorityOrder] ?? 1;
 
     if (aPriority !== bPriority) {
       return aPriority - bPriority;
     }
 
-    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    return new Date(a.task.createdAt).getTime() - new Date(b.task.createdAt).getTime();
   });
-  scheduledTasks.sort((a: typeof tasks.$inferSelect, b: typeof tasks.$inferSelect) => {
+  scheduledTasks.sort((a: TaskWithRelations, b: TaskWithRelations) => {
     const priorityOrder = { high: 0, medium: 1, low: 2 };
-    const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] ?? 1;
-    const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] ?? 1;
+    const aPriority = priorityOrder[a.task.priority as keyof typeof priorityOrder] ?? 1;
+    const bPriority = priorityOrder[b.task.priority as keyof typeof priorityOrder] ?? 1;
 
     if (aPriority !== bPriority) {
       return aPriority - bPriority;
     }
 
-    return new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime();
+    return new Date(a.task.dueDate!).getTime() - new Date(b.task.dueDate!).getTime();
   });
 
   const blocks: (KnownBlock | Block)[] = [
@@ -98,24 +104,43 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
       },
     });
 
-    inboxTasks.slice(0, 5).forEach((task) => {
+    inboxTasks.slice(0, 5).forEach(({ task, project, context }) => {
+      // Build task text with project and context info
+      let taskText = `*${task.title}*`;
+      if (task.description) {
+        taskText += `\n${task.description}`;
+      }
+
       blocks.push({
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}`,
+          text: taskText,
         },
       });
 
-      // Add label and "Is it actionable?" buttons
+      // Add context with project and context info
+      const contextElements: { type: "mrkdwn"; text: string }[] = [];
+      if (project) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: `📁 ${project.name}`,
+        });
+      }
+      if (context) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: `🏷️ ${context.name}`,
+        });
+      }
+      contextElements.push({
+        type: "mrkdwn" as const,
+        text: "_Is this item actionable?_",
+      });
+
       blocks.push({
         type: "context",
-        elements: [
-          {
-            type: "mrkdwn",
-            text: "_Is this item actionable?_",
-          },
-        ],
+        elements: contextElements,
       });
 
       blocks.push({
@@ -175,7 +200,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
       },
     });
 
-    nextActionTasks.slice(0, 10).forEach((task) => {
+    nextActionTasks.slice(0, 10).forEach(({ task, project, context }) => {
       const taskBlock: KnownBlock | Block = {
         type: "section",
         text: {
@@ -232,8 +257,20 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
 
       blocks.push(taskBlock);
 
-      // Add context with due date and priority
+      // Add context with project, context, due date, and priority
       const contextElements: { type: "mrkdwn"; text: string }[] = [];
+      if (project) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: `📁 ${project.name}`,
+        });
+      }
+      if (context) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: `🏷️ ${context.name}`,
+        });
+      }
       if (task.dueDate) {
         contextElements.push({
           type: "mrkdwn" as const,
@@ -305,7 +342,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
       },
     });
 
-    scheduledTasks.slice(0, 10).forEach((task) => {
+    scheduledTasks.slice(0, 10).forEach(({ task, project, context }) => {
       blocks.push({
         type: "section",
         text: {
@@ -360,19 +397,32 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         },
       });
 
-      // Add context with due date and priority
+      // Add context with project, context, due date, and priority
+      const contextElements: { type: "mrkdwn"; text: string }[] = [];
+      if (project) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: `📁 ${project.name}`,
+        });
+      }
+      if (context) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: `🏷️ ${context.name}`,
+        });
+      }
+      contextElements.push({
+        type: "mrkdwn" as const,
+        text: `📅 ${task.dueDate!.toISOString().split("T")[0]}`,
+      });
+      contextElements.push({
+        type: "mrkdwn" as const,
+        text: `${getPriorityEmoji(task.priority || "medium")} ${task.priority || "medium"}`,
+      });
+
       blocks.push({
         type: "context",
-        elements: [
-          {
-            type: "mrkdwn" as const,
-            text: `📅 ${task.dueDate!.toISOString().split("T")[0]}`,
-          },
-          {
-            type: "mrkdwn" as const,
-            text: `${getPriorityEmoji(task.priority || "medium")} ${task.priority || "medium"}`,
-          },
-        ],
+        elements: contextElements,
       });
 
       blocks.push({
@@ -409,7 +459,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
       },
     });
 
-    waitingTasks.slice(0, 10).forEach((task) => {
+    waitingTasks.slice(0, 10).forEach(({ task, project, context }) => {
       blocks.push({
         type: "section",
         text: {
@@ -464,16 +514,31 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         },
       });
 
-      // Add context with delegated person
+      // Add context with project, context, and delegated person
+      const contextElements: { type: "mrkdwn"; text: string }[] = [];
+      if (project) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: `📁 ${project.name}`,
+        });
+      }
+      if (context) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: `🏷️ ${context.name}`,
+        });
+      }
       if (task.delegatedTo) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: `👤 Waiting for: ${task.delegatedTo}`,
+        });
+      }
+
+      if (contextElements.length > 0) {
         blocks.push({
           type: "context",
-          elements: [
-            {
-              type: "mrkdwn" as const,
-              text: `👤 Waiting for: ${task.delegatedTo}`,
-            },
-          ],
+          elements: contextElements,
         });
       }
 
@@ -511,7 +576,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
       },
     });
 
-    somedayTasks.slice(0, 10).forEach((task) => {
+    somedayTasks.slice(0, 10).forEach(({ task, project, context }) => {
       blocks.push({
         type: "section",
         text: {
@@ -565,6 +630,28 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
           action_id: `task_overflow_${task.id}`,
         },
       });
+
+      // Add context with project and context info
+      const contextElements: { type: "mrkdwn"; text: string }[] = [];
+      if (project) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: `📁 ${project.name}`,
+        });
+      }
+      if (context) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: `🏷️ ${context.name}`,
+        });
+      }
+
+      if (contextElements.length > 0) {
+        blocks.push({
+          type: "context",
+          elements: contextElements,
+        });
+      }
 
       blocks.push({
         type: "actions",
@@ -914,7 +1001,162 @@ export function buildMoveTaskModal(taskId: string): View {
   };
 }
 
-export function buildAddTaskModal(): View {
+export function buildAddTaskModal(
+  userProjects: Array<typeof projects.$inferSelect> = [],
+  userContexts: Array<typeof contexts.$inferSelect> = [],
+): View {
+  const blocks: any[] = [
+    {
+      type: "input",
+      block_id: "task_title_block",
+      element: {
+        type: "plain_text_input",
+        action_id: "task_title_input",
+        placeholder: {
+          type: "plain_text",
+          text: "Enter task title",
+        },
+        max_length: 500,
+      },
+      label: {
+        type: "plain_text",
+        text: "Task Title",
+        emoji: true,
+      },
+    },
+    {
+      type: "input",
+      block_id: "task_description_block",
+      element: {
+        type: "plain_text_input",
+        action_id: "task_description_input",
+        multiline: true,
+        placeholder: {
+          type: "plain_text",
+          text: "Add more details (optional)",
+        },
+      },
+      label: {
+        type: "plain_text",
+        text: "Description",
+        emoji: true,
+      },
+      optional: true,
+    },
+  ];
+
+  // Add project selector if projects exist
+  if (userProjects.length > 0) {
+    blocks.push({
+      type: "input",
+      block_id: "task_project_block",
+      element: {
+        type: "static_select",
+        action_id: "task_project_input",
+        placeholder: {
+          type: "plain_text",
+          text: "Select project (optional)",
+        },
+        options: userProjects.map((project) => ({
+          text: {
+            type: "plain_text",
+            text: project.name,
+            emoji: true,
+          },
+          value: project.id,
+        })),
+      },
+      label: {
+        type: "plain_text",
+        text: "Project",
+        emoji: true,
+      },
+      optional: true,
+    });
+  }
+
+  // Add context selector if contexts exist
+  if (userContexts.length > 0) {
+    blocks.push({
+      type: "input",
+      block_id: "task_context_block",
+      element: {
+        type: "static_select",
+        action_id: "task_context_input",
+        placeholder: {
+          type: "plain_text",
+          text: "Select context (optional)",
+        },
+        options: userContexts.map((context) => ({
+          text: {
+            type: "plain_text",
+            text: context.name,
+            emoji: true,
+          },
+          value: context.id,
+        })),
+      },
+      label: {
+        type: "plain_text",
+        text: "Context",
+        emoji: true,
+      },
+      optional: true,
+    });
+  }
+
+  blocks.push({
+    type: "input",
+    block_id: "task_priority_block",
+    element: {
+      type: "static_select",
+      action_id: "task_priority_input",
+      placeholder: {
+        type: "plain_text",
+        text: "Select priority",
+      },
+      options: [
+        {
+          text: {
+            type: "plain_text",
+            text: "🔴 High",
+            emoji: true,
+          },
+          value: "high",
+        },
+        {
+          text: {
+            type: "plain_text",
+            text: "🟡 Medium",
+            emoji: true,
+          },
+          value: "medium",
+        },
+        {
+          text: {
+            type: "plain_text",
+            text: "🟢 Low",
+            emoji: true,
+          },
+          value: "low",
+        },
+      ],
+      initial_option: {
+        text: {
+          type: "plain_text",
+          text: "🟡 Medium",
+          emoji: true,
+        },
+        value: "medium",
+      },
+    },
+    label: {
+      type: "plain_text",
+      text: "Priority",
+      emoji: true,
+    },
+  });
+
   return {
     type: "modal",
     callback_id: "add_task_modal",
@@ -933,95 +1175,6 @@ export function buildAddTaskModal(): View {
       text: "Cancel",
       emoji: true,
     },
-    blocks: [
-      {
-        type: "input",
-        block_id: "task_title_block",
-        element: {
-          type: "plain_text_input",
-          action_id: "task_title_input",
-          placeholder: {
-            type: "plain_text",
-            text: "Enter task title",
-          },
-          max_length: 500,
-        },
-        label: {
-          type: "plain_text",
-          text: "Task Title",
-          emoji: true,
-        },
-      },
-      {
-        type: "input",
-        block_id: "task_description_block",
-        element: {
-          type: "plain_text_input",
-          action_id: "task_description_input",
-          multiline: true,
-          placeholder: {
-            type: "plain_text",
-            text: "Add more details (optional)",
-          },
-        },
-        label: {
-          type: "plain_text",
-          text: "Description",
-          emoji: true,
-        },
-        optional: true,
-      },
-      {
-        type: "input",
-        block_id: "task_priority_block",
-        element: {
-          type: "static_select",
-          action_id: "task_priority_input",
-          placeholder: {
-            type: "plain_text",
-            text: "Select priority",
-          },
-          options: [
-            {
-              text: {
-                type: "plain_text",
-                text: "🔴 High",
-                emoji: true,
-              },
-              value: "high",
-            },
-            {
-              text: {
-                type: "plain_text",
-                text: "🟡 Medium",
-                emoji: true,
-              },
-              value: "medium",
-            },
-            {
-              text: {
-                type: "plain_text",
-                text: "🟢 Low",
-                emoji: true,
-              },
-              value: "low",
-            },
-          ],
-          initial_option: {
-            text: {
-              type: "plain_text",
-              text: "🟡 Medium",
-              emoji: true,
-            },
-            value: "medium",
-          },
-        },
-        label: {
-          type: "plain_text",
-          text: "Priority",
-          emoji: true,
-        },
-      },
-    ],
+    blocks,
   };
 }

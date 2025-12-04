@@ -5,6 +5,8 @@ import {
   getUserTasks,
   createContext,
   getUserContexts,
+  createProject,
+  getUserProjects,
 } from "@/lib/services/tasks";
 import { findOrCreateUser } from "@/lib/services/user";
 
@@ -146,6 +148,40 @@ export async function handleSlashCommand(payload: SlackCommandPayload) {
       };
     }
 
+    case "add-project": {
+      if (!restText) {
+        return {
+          response_type: "ephemeral",
+          text: "Please provide a project name. Usage: `/gtd add-project [name]`\nExample: `/gtd add-project Website Redesign`",
+        };
+      }
+
+      const project = await createProject(user.slackUserId, restText);
+      return {
+        response_type: "ephemeral",
+        text: `✅ Project added: "${project.name}" (ID: ${project.id})`,
+      };
+    }
+
+    case "projects": {
+      const projects = await getUserProjects(user.slackUserId);
+      if (projects.length === 0) {
+        return {
+          response_type: "ephemeral",
+          text: "You have no projects yet. Add one with `/gtd add-project [name]`",
+        };
+      }
+
+      const projectList = projects
+        .map((project) => `• ${project.name} (ID: ${project.id})`)
+        .join("\n");
+
+      return {
+        response_type: "ephemeral",
+        text: `*Your projects:*\n${projectList}`,
+      };
+    }
+
     default: {
       return {
         response_type: "ephemeral",
@@ -157,6 +193,10 @@ export async function handleSlashCommand(payload: SlackCommandPayload) {
 • \`/gtd list\` - List all active tasks
 • \`/gtd complete [task-id]\` - Mark task as complete
 • \`/gtd delete [task-id]\` - Delete a task
+
+*Projects:*
+• \`/gtd add-project [name]\` - Create a new project (e.g., Website Redesign)
+• \`/gtd projects\` - List all your projects
 
 *Contexts:*
 • \`/gtd add-context [name]\` - Create a new context (e.g., @computer, @home)

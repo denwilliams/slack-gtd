@@ -4,6 +4,8 @@ import {
   createTask,
   updateTaskPriority,
   clarifyTask,
+  getUserProjects,
+  getUserContexts,
 } from "@/lib/services/tasks";
 import { findOrCreateUser } from "@/lib/services/user";
 import { refreshHomeTab } from "./home";
@@ -66,6 +68,10 @@ export async function handleInteraction(payload: InteractionPayload) {
       values.task_description_block.task_description_input.value;
     const priority =
       values.task_priority_block.task_priority_input.selected_option?.value;
+    const projectId =
+      values.task_project_block?.task_project_input?.selected_option?.value;
+    const contextId =
+      values.task_context_block?.task_context_input?.selected_option?.value;
 
     if (!title) {
       return {
@@ -79,6 +85,8 @@ export async function handleInteraction(payload: InteractionPayload) {
     await createTask(user.slackUserId, title, {
       description: description || undefined,
       priority: (priority as "high" | "medium" | "low") || "medium",
+      projectId: projectId || undefined,
+      contextId: contextId || undefined,
     });
 
     // Refresh home tab
@@ -247,7 +255,12 @@ export async function handleInteraction(payload: InteractionPayload) {
     // Handle open add task modal
     if (action.action_id === "open_add_task_modal") {
       const slack = getSlackClient();
-      const modalView = buildAddTaskModal();
+
+      // Fetch user's projects and contexts for the modal
+      const projects = await getUserProjects(user.slackUserId);
+      const contexts = await getUserContexts(user.slackUserId);
+
+      const modalView = buildAddTaskModal(projects, contexts);
 
       await slack.views.open({
         trigger_id: payload.trigger_id!,

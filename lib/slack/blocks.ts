@@ -212,6 +212,14 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             {
               text: {
                 type: "plain_text",
+                text: "📦 Move",
+                emoji: true,
+              },
+              value: `move:${task.id}`,
+            },
+            {
+              text: {
+                type: "plain_text",
                 text: "🗑️ Delete",
                 emoji: true,
               },
@@ -379,6 +387,14 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             {
               text: {
                 type: "plain_text",
+                text: "📦 Move",
+                emoji: true,
+              },
+              value: `move:${task.id}`,
+            },
+            {
+              text: {
+                type: "plain_text",
                 text: "🗑️ Delete",
                 emoji: true,
               },
@@ -510,6 +526,14 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             {
               text: {
                 type: "plain_text",
+                text: "📦 Move",
+                emoji: true,
+              },
+              value: `move:${task.id}`,
+            },
+            {
+              text: {
+                type: "plain_text",
                 text: "🗑️ Delete",
                 emoji: true,
               },
@@ -600,6 +624,14 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
                 emoji: true,
               },
               value: `priority:low:${task.id}`,
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "📦 Move",
+                emoji: true,
+              },
+              value: `move:${task.id}`,
             },
             {
               text: {

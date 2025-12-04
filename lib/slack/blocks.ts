@@ -188,10 +188,34 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             {
               text: {
                 type: "plain_text",
+                text: "🔴 Set High Priority",
+                emoji: true,
+              },
+              value: `priority:high:${task.id}`,
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "🟡 Set Medium Priority",
+                emoji: true,
+              },
+              value: `priority:medium:${task.id}`,
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "🟢 Set Low Priority",
+                emoji: true,
+              },
+              value: `priority:low:${task.id}`,
+            },
+            {
+              text: {
+                type: "plain_text",
                 text: "🗑️ Delete",
                 emoji: true,
               },
-              value: task.id,
+              value: `delete:${task.id}`,
             },
           ],
           action_id: `task_overflow_${task.id}`,
@@ -331,10 +355,34 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             {
               text: {
                 type: "plain_text",
+                text: "🔴 Set High Priority",
+                emoji: true,
+              },
+              value: `priority:high:${task.id}`,
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "🟡 Set Medium Priority",
+                emoji: true,
+              },
+              value: `priority:medium:${task.id}`,
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "🟢 Set Low Priority",
+                emoji: true,
+              },
+              value: `priority:low:${task.id}`,
+            },
+            {
+              text: {
+                type: "plain_text",
                 text: "🗑️ Delete",
                 emoji: true,
               },
-              value: task.id,
+              value: `delete:${task.id}`,
             },
           ],
           action_id: `task_overflow_${task.id}`,
@@ -438,10 +486,34 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             {
               text: {
                 type: "plain_text",
+                text: "🔴 Set High Priority",
+                emoji: true,
+              },
+              value: `priority:high:${task.id}`,
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "🟡 Set Medium Priority",
+                emoji: true,
+              },
+              value: `priority:medium:${task.id}`,
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "🟢 Set Low Priority",
+                emoji: true,
+              },
+              value: `priority:low:${task.id}`,
+            },
+            {
+              text: {
+                type: "plain_text",
                 text: "🗑️ Delete",
                 emoji: true,
               },
-              value: task.id,
+              value: `delete:${task.id}`,
             },
           ],
           action_id: `task_overflow_${task.id}`,
@@ -508,10 +580,34 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             {
               text: {
                 type: "plain_text",
+                text: "🔴 Set High Priority",
+                emoji: true,
+              },
+              value: `priority:high:${task.id}`,
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "🟡 Set Medium Priority",
+                emoji: true,
+              },
+              value: `priority:medium:${task.id}`,
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "🟢 Set Low Priority",
+                emoji: true,
+              },
+              value: `priority:low:${task.id}`,
+            },
+            {
+              text: {
+                type: "plain_text",
                 text: "🗑️ Delete",
                 emoji: true,
               },
-              value: task.id,
+              value: `delete:${task.id}`,
             },
           ],
           action_id: `task_overflow_${task.id}`,

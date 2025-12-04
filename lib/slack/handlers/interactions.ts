@@ -172,29 +172,48 @@ export async function handleInteraction(payload: InteractionPayload) {
       return { ok: true };
     }
 
-    // Handle overflow menu (priority change or delete)
+    // Handle overflow menu (priority change, move, or delete)
     if (action.action_id.startsWith("task_overflow_")) {
       const selectedValue = action.selected_option?.value!;
 
-      // Parse the value format: "priority:high:taskId" or "delete:taskId"
+      // Parse the value format: "priority:high:taskId", "move:taskId", or "delete:taskId"
       if (selectedValue.startsWith("priority:")) {
         const parts = selectedValue.split(":");
         const priority = parts[1] as "high" | "medium" | "low";
         const taskId = parts[2];
 
         await updateTaskPriority(taskId, user.slackUserId, priority);
+
+        // Refresh home tab
+        await refreshHomeTab(user.slackUserId, slackTeam.id);
+
+        return {
+          response_action: "update",
+          view: {},
+        };
+      } else if (selectedValue.startsWith("move:")) {
+        const taskId = selectedValue.replace("move:", "");
+        const slack = getSlackClient();
+        const modalView = buildMoveTaskModal(taskId);
+
+        await slack.views.open({
+          trigger_id: payload.trigger_id!,
+          view: modalView,
+        });
+
+        return { ok: true };
       } else if (selectedValue.startsWith("delete:")) {
         const taskId = selectedValue.replace("delete:", "");
         await deleteTask(taskId, user.slackUserId);
+
+        // Refresh home tab
+        await refreshHomeTab(user.slackUserId, slackTeam.id);
+
+        return {
+          response_action: "update",
+          view: {},
+        };
       }
-
-      // Refresh home tab
-      await refreshHomeTab(user.slackUserId, slackTeam.id);
-
-      return {
-        response_action: "update",
-        view: {},
-      };
     }
 
     // Handle clarify actionable button

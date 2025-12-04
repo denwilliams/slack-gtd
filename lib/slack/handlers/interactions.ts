@@ -172,12 +172,21 @@ export async function handleInteraction(payload: InteractionPayload) {
       return { ok: true };
     }
 
-    // Handle overflow menu (delete)
+    // Handle overflow menu (priority change or delete)
     if (action.action_id.startsWith("task_overflow_")) {
-      // For overflow menus, the task ID is in selected_option.value
-      const taskId = action.selected_option?.value!;
-      // The selected option will be to delete
-      await deleteTask(taskId, user.slackUserId);
+      const selectedValue = action.selected_option?.value!;
+
+      // Parse the value format: "priority:high:taskId" or "delete:taskId"
+      if (selectedValue.startsWith("priority:")) {
+        const parts = selectedValue.split(":");
+        const priority = parts[1] as "high" | "medium" | "low";
+        const taskId = parts[2];
+
+        await updateTaskPriority(taskId, user.slackUserId, priority);
+      } else if (selectedValue.startsWith("delete:")) {
+        const taskId = selectedValue.replace("delete:", "");
+        await deleteTask(taskId, user.slackUserId);
+      }
 
       // Refresh home tab
       await refreshHomeTab(user.slackUserId, slackTeam.id);

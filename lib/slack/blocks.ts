@@ -85,6 +85,25 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             emoji: true,
           },
           action_id: "open_add_task_modal",
+          style: "primary",
+        },
+        {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "📁 New Project",
+            emoji: true,
+          },
+          action_id: "open_add_project_modal",
+        },
+        {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "🏷️ New Context",
+            emoji: true,
+          },
+          action_id: "open_add_context_modal",
         },
       ],
     },
@@ -1176,5 +1195,108 @@ export function buildAddTaskModal(
       emoji: true,
     },
     blocks,
+  };
+}
+
+export function buildAddProjectModal(): View {
+  return {
+    type: "modal",
+    callback_id: "add_project_modal",
+    title: {
+      type: "plain_text",
+      text: "New Project",
+      emoji: true,
+    },
+    submit: {
+      type: "plain_text",
+      text: "Create",
+      emoji: true,
+    },
+    close: {
+      type: "plain_text",
+      text: "Cancel",
+      emoji: true,
+    },
+    blocks: [
+      {
+        type: "input",
+        block_id: "project_name_block",
+        element: {
+          type: "plain_text_input",
+          action_id: "project_name_input",
+          placeholder: {
+            type: "plain_text",
+            text: "Enter project name",
+          },
+          max_length: 255,
+        },
+        label: {
+          type: "plain_text",
+          text: "Project Name",
+          emoji: true,
+        },
+      },
+      {
+        type: "input",
+        block_id: "project_description_block",
+        element: {
+          type: "plain_text_input",
+          action_id: "project_description_input",
+          multiline: true,
+          placeholder: {
+            type: "plain_text",
+            text: "Add project description (optional)",
+          },
+        },
+        label: {
+          type: "plain_text",
+          text: "Description",
+          emoji: true,
+        },
+        optional: true,
+      },
+    ],
+  };
+}
+
+export function buildAddContextModal(): View {
+  return {
+    type: "modal",
+    callback_id: "add_context_modal",
+    title: {
+      type: "plain_text",
+      text: "New Context",
+      emoji: true,
+    },
+    submit: {
+      type: "plain_text",
+      text: "Create",
+      emoji: true,
+    },
+    close: {
+      type: "plain_text",
+      text: "Cancel",
+      emoji: true,
+    },
+    blocks: [
+      {
+        type: "input",
+        block_id: "context_name_block",
+        element: {
+          type: "plain_text_input",
+          action_id: "context_name_input",
+          placeholder: {
+            type: "plain_text",
+            text: "Enter context name (e.g., @home, @computer)",
+          },
+          max_length: 255,
+        },
+        label: {
+          type: "plain_text",
+          text: "Context Name",
+          emoji: true,
+        },
+      },
+    ],
   };
 }

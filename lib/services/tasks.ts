@@ -43,6 +43,16 @@ export async function getUserTasks(userId: string, status: string = "active") {
     .orderBy(desc(tasks.createdAt));
 }
 
+export async function getTaskById(taskId: string, userId: string) {
+  const result = await db
+    .select()
+    .from(tasks)
+    .where(and(eq(tasks.id, taskId), eq(tasks.slackUserId, userId)))
+    .limit(1);
+
+  return result[0];
+}
+
 export async function getUserTasksWithRelations(
   userId: string,
   status: string = "active",
@@ -91,6 +101,25 @@ export async function updateTaskPriority(
     .update(tasks)
     .set({
       priority,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(tasks.id, taskId), eq(tasks.slackUserId, userId)))
+    .returning();
+
+  return task[0];
+}
+
+export async function updateTaskProjectContext(
+  taskId: string,
+  userId: string,
+  projectId: string | null,
+  contextId: string | null,
+) {
+  const task = await db
+    .update(tasks)
+    .set({
+      projectId,
+      contextId,
       updatedAt: new Date(),
     })
     .where(and(eq(tasks.id, taskId), eq(tasks.slackUserId, userId)))

@@ -8,6 +8,8 @@ import {
   getUserContexts,
   createProject,
   createContext,
+  getTaskById,
+  updateTaskProjectContext,
 } from "@/lib/services/tasks";
 import { findOrCreateUser } from "@/lib/services/user";
 import { refreshHomeTab } from "./home";
@@ -19,6 +21,7 @@ import {
   buildMoveTaskModal,
   buildAddProjectModal,
   buildAddContextModal,
+  buildEditTaskModal,
 } from "@/lib/slack/blocks";
 
 interface BlockAction {
@@ -225,6 +228,34 @@ export async function handleInteraction(payload: InteractionPayload) {
           response_action: "update",
           view: {},
         };
+      } else if (selectedValue.startsWith("edit:")) {
+        const taskId = selectedValue.replace("edit:", "");
+        const slack = getSlackClient();
+
+        // Fetch the task to get current project/context
+        const task = await getTaskById(taskId, user.slackUserId);
+        if (!task) {
+          return { ok: true };
+        }
+
+        // Fetch user's projects and contexts for the modal
+        const projects = await getUserProjects(user.slackUserId);
+        const contexts = await getUserContexts(user.slackUserId);
+
+        const modalView = buildEditTaskModal(
+          taskId,
+          task.projectId,
+          task.contextId,
+          projects,
+          contexts,
+        );
+
+        await slack.views.open({
+          trigger_id: payload.trigger_id!,
+          view: modalView,
+        });
+
+        return { ok: true };
       }
     }
 
@@ -452,6 +483,43 @@ export async function handleInteraction(payload: InteractionPayload) {
     }
 
     await createContext(user.slackUserId, name);
+
+    // Refresh home tab
+    await refreshHomeTab(user.slackUserId, slackTeam.id);
+
+    return {
+      response_action: "clear",
+    };
+  }
+
+  // Handle edit task modal submission
+  if (
+    type === "view_submission" &&
+    view?.callback_id.startsWith("edit_task_modal_")
+  ) {
+    const taskId = view.callback_id.replace("edit_task_modal_", "");
+    const values = view.state.values;
+
+    // Get selected project (handle "none" value)
+    const projectId =
+      values.edit_task_project_block?.edit_task_project_input
+        ?.selected_option?.value;
+    const finalProjectId =
+      projectId && projectId !== "none" ? projectId : null;
+
+    // Get selected context (handle "none" value)
+    const contextId =
+      values.edit_task_context_block?.edit_task_context_input
+        ?.selected_option?.value;
+    const finalContextId =
+      contextId && contextId !== "none" ? contextId : null;
+
+    await updateTaskProjectContext(
+      taskId,
+      user.slackUserId,
+      finalProjectId,
+      finalContextId,
+    );
 
     // Refresh home tab
     await refreshHomeTab(user.slackUserId, slackTeam.id);

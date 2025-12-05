@@ -256,6 +256,14 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             {
               text: {
                 type: "plain_text",
+                text: "✏️ Edit",
+                emoji: true,
+              },
+              value: `edit:${task.id}`,
+            },
+            {
+              text: {
+                type: "plain_text",
                 text: "📦 Move",
                 emoji: true,
               },
@@ -398,6 +406,14 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             {
               text: {
                 type: "plain_text",
+                text: "✏️ Edit",
+                emoji: true,
+              },
+              value: `edit:${task.id}`,
+            },
+            {
+              text: {
+                type: "plain_text",
                 text: "📦 Move",
                 emoji: true,
               },
@@ -515,6 +531,14 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             {
               text: {
                 type: "plain_text",
+                text: "✏️ Edit",
+                emoji: true,
+              },
+              value: `edit:${task.id}`,
+            },
+            {
+              text: {
+                type: "plain_text",
                 text: "📦 Move",
                 emoji: true,
               },
@@ -628,6 +652,14 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
                 emoji: true,
               },
               value: `priority:low:${task.id}`,
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "✏️ Edit",
+                emoji: true,
+              },
+              value: `edit:${task.id}`,
             },
             {
               text: {
@@ -1298,5 +1330,165 @@ export function buildAddContextModal(): View {
         },
       },
     ],
+  };
+}
+
+export function buildEditTaskModal(
+  taskId: string,
+  currentProjectId: string | null,
+  currentContextId: string | null,
+  userProjects: Array<typeof projects.$inferSelect>,
+  userContexts: Array<typeof contexts.$inferSelect>,
+): View {
+  const blocks: any[] = [];
+
+  // Add project selector
+  if (userProjects.length > 0) {
+    const projectOptions = userProjects.map((project) => ({
+      text: {
+        type: "plain_text",
+        text: project.name,
+        emoji: true,
+      },
+      value: project.id,
+    }));
+
+    // Add "None" option at the beginning
+    projectOptions.unshift({
+      text: {
+        type: "plain_text",
+        text: "None",
+        emoji: true,
+      },
+      value: "none",
+    });
+
+    const projectBlock: any = {
+      type: "input",
+      block_id: "edit_task_project_block",
+      element: {
+        type: "static_select",
+        action_id: "edit_task_project_input",
+        placeholder: {
+          type: "plain_text",
+          text: "Select project",
+        },
+        options: projectOptions,
+      },
+      label: {
+        type: "plain_text",
+        text: "Project",
+        emoji: true,
+      },
+      optional: true,
+    };
+
+    // Set initial option if task has a project
+    if (currentProjectId) {
+      const currentProject = userProjects.find((p) => p.id === currentProjectId);
+      if (currentProject) {
+        projectBlock.element.initial_option = {
+          text: {
+            type: "plain_text",
+            text: currentProject.name,
+            emoji: true,
+          },
+          value: currentProject.id,
+        };
+      }
+    }
+
+    blocks.push(projectBlock);
+  }
+
+  // Add context selector
+  if (userContexts.length > 0) {
+    const contextOptions = userContexts.map((context) => ({
+      text: {
+        type: "plain_text",
+        text: context.name,
+        emoji: true,
+      },
+      value: context.id,
+    }));
+
+    // Add "None" option at the beginning
+    contextOptions.unshift({
+      text: {
+        type: "plain_text",
+        text: "None",
+        emoji: true,
+      },
+      value: "none",
+    });
+
+    const contextBlock: any = {
+      type: "input",
+      block_id: "edit_task_context_block",
+      element: {
+        type: "static_select",
+        action_id: "edit_task_context_input",
+        placeholder: {
+          type: "plain_text",
+          text: "Select context",
+        },
+        options: contextOptions,
+      },
+      label: {
+        type: "plain_text",
+        text: "Context",
+        emoji: true,
+      },
+      optional: true,
+    };
+
+    // Set initial option if task has a context
+    if (currentContextId) {
+      const currentContext = userContexts.find((c) => c.id === currentContextId);
+      if (currentContext) {
+        contextBlock.element.initial_option = {
+          text: {
+            type: "plain_text",
+            text: currentContext.name,
+            emoji: true,
+          },
+          value: currentContext.id,
+        };
+      }
+    }
+
+    blocks.push(contextBlock);
+  }
+
+  // If no projects or contexts, show a message
+  if (blocks.length === 0) {
+    blocks.push({
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: "You don't have any projects or contexts yet.\n\nCreate them using the buttons on the Home tab!",
+      },
+    });
+  }
+
+  return {
+    type: "modal",
+    callback_id: `edit_task_modal_${taskId}`,
+    title: {
+      type: "plain_text",
+      text: "Edit Task",
+      emoji: true,
+    },
+    submit: {
+      type: "plain_text",
+      text: "Save",
+      emoji: true,
+    },
+    close: {
+      type: "plain_text",
+      text: "Cancel",
+      emoji: true,
+    },
+    blocks,
   };
 }

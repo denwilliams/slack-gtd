@@ -232,26 +232,10 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             {
               text: {
                 type: "plain_text",
-                text: "🔴 Set High Priority",
+                text: "🎯 Set Priority",
                 emoji: true,
               },
-              value: `priority:high:${task.id}`,
-            },
-            {
-              text: {
-                type: "plain_text",
-                text: "🟡 Set Medium Priority",
-                emoji: true,
-              },
-              value: `priority:medium:${task.id}`,
-            },
-            {
-              text: {
-                type: "plain_text",
-                text: "🟢 Set Low Priority",
-                emoji: true,
-              },
-              value: `priority:low:${task.id}`,
+              value: `set_priority:${task.id}`,
             },
             {
               text: {
@@ -382,26 +366,10 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             {
               text: {
                 type: "plain_text",
-                text: "🔴 Set High Priority",
+                text: "🎯 Set Priority",
                 emoji: true,
               },
-              value: `priority:high:${task.id}`,
-            },
-            {
-              text: {
-                type: "plain_text",
-                text: "🟡 Set Medium Priority",
-                emoji: true,
-              },
-              value: `priority:medium:${task.id}`,
-            },
-            {
-              text: {
-                type: "plain_text",
-                text: "🟢 Set Low Priority",
-                emoji: true,
-              },
-              value: `priority:low:${task.id}`,
+              value: `set_priority:${task.id}`,
             },
             {
               text: {
@@ -507,26 +475,10 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             {
               text: {
                 type: "plain_text",
-                text: "🔴 Set High Priority",
+                text: "🎯 Set Priority",
                 emoji: true,
               },
-              value: `priority:high:${task.id}`,
-            },
-            {
-              text: {
-                type: "plain_text",
-                text: "🟡 Set Medium Priority",
-                emoji: true,
-              },
-              value: `priority:medium:${task.id}`,
-            },
-            {
-              text: {
-                type: "plain_text",
-                text: "🟢 Set Low Priority",
-                emoji: true,
-              },
-              value: `priority:low:${task.id}`,
+              value: `set_priority:${task.id}`,
             },
             {
               text: {
@@ -632,26 +584,10 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             {
               text: {
                 type: "plain_text",
-                text: "🔴 Set High Priority",
+                text: "🎯 Set Priority",
                 emoji: true,
               },
-              value: `priority:high:${task.id}`,
-            },
-            {
-              text: {
-                type: "plain_text",
-                text: "🟡 Set Medium Priority",
-                emoji: true,
-              },
-              value: `priority:medium:${task.id}`,
-            },
-            {
-              text: {
-                type: "plain_text",
-                text: "🟢 Set Low Priority",
-                emoji: true,
-              },
-              value: `priority:low:${task.id}`,
+              value: `set_priority:${task.id}`,
             },
             {
               text: {
@@ -1490,5 +1426,76 @@ export function buildEditTaskModal(
       emoji: true,
     },
     blocks,
+  };
+}
+
+export function buildSetPriorityModal(taskId: string): View {
+  return {
+    type: "modal",
+    callback_id: `set_priority_modal_${taskId}`,
+    title: {
+      type: "plain_text",
+      text: "Set Priority",
+      emoji: true,
+    },
+    submit: {
+      type: "plain_text",
+      text: "Save",
+      emoji: true,
+    },
+    close: {
+      type: "plain_text",
+      text: "Cancel",
+      emoji: true,
+    },
+    blocks: [
+      {
+        type: "input",
+        block_id: "priority_block",
+        element: {
+          type: "radio_buttons",
+          action_id: "priority_input",
+          options: [
+            {
+              text: {
+                type: "plain_text",
+                text: "🔴 High Priority",
+                emoji: true,
+              },
+              value: "high",
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "🟡 Medium Priority",
+                emoji: true,
+              },
+              value: "medium",
+            },
+            {
+              text: {
+                type: "plain_text",
+                text: "🟢 Low Priority",
+                emoji: true,
+              },
+              value: "low",
+            },
+          ],
+          initial_option: {
+            text: {
+              type: "plain_text",
+              text: "🟡 Medium Priority",
+              emoji: true,
+            },
+            value: "medium",
+          },
+        },
+        label: {
+          type: "plain_text",
+          text: "Choose priority level",
+          emoji: true,
+        },
+      },
+    ],
   };
 }

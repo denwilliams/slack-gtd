@@ -4,6 +4,10 @@ import {
   createTask,
   updateTaskPriority,
   clarifyTask,
+  getUserProjects,
+  getUserContexts,
+  createProject,
+  createContext,
 } from "@/lib/services/tasks";
 import { findOrCreateUser } from "@/lib/services/user";
 import { refreshHomeTab } from "./home";
@@ -13,6 +17,8 @@ import {
   buildActionableModal,
   buildNotActionableModal,
   buildMoveTaskModal,
+  buildAddProjectModal,
+  buildAddContextModal,
 } from "@/lib/slack/blocks";
 
 interface BlockAction {
@@ -66,6 +72,10 @@ export async function handleInteraction(payload: InteractionPayload) {
       values.task_description_block.task_description_input.value;
     const priority =
       values.task_priority_block.task_priority_input.selected_option?.value;
+    const projectId =
+      values.task_project_block?.task_project_input?.selected_option?.value;
+    const contextId =
+      values.task_context_block?.task_context_input?.selected_option?.value;
 
     if (!title) {
       return {
@@ -79,6 +89,8 @@ export async function handleInteraction(payload: InteractionPayload) {
     await createTask(user.slackUserId, title, {
       description: description || undefined,
       priority: (priority as "high" | "medium" | "low") || "medium",
+      projectId: projectId || undefined,
+      contextId: contextId || undefined,
     });
 
     // Refresh home tab
@@ -247,7 +259,38 @@ export async function handleInteraction(payload: InteractionPayload) {
     // Handle open add task modal
     if (action.action_id === "open_add_task_modal") {
       const slack = getSlackClient();
-      const modalView = buildAddTaskModal();
+
+      // Fetch user's projects and contexts for the modal
+      const projects = await getUserProjects(user.slackUserId);
+      const contexts = await getUserContexts(user.slackUserId);
+
+      const modalView = buildAddTaskModal(projects, contexts);
+
+      await slack.views.open({
+        trigger_id: payload.trigger_id!,
+        view: modalView,
+      });
+
+      return { ok: true };
+    }
+
+    // Handle open add project modal
+    if (action.action_id === "open_add_project_modal") {
+      const slack = getSlackClient();
+      const modalView = buildAddProjectModal();
+
+      await slack.views.open({
+        trigger_id: payload.trigger_id!,
+        view: modalView,
+      });
+
+      return { ok: true };
+    }
+
+    // Handle open add context modal
+    if (action.action_id === "open_add_context_modal") {
+      const slack = getSlackClient();
+      const modalView = buildAddContextModal();
 
       await slack.views.open({
         trigger_id: payload.trigger_id!,
@@ -351,6 +394,64 @@ export async function handleInteraction(payload: InteractionPayload) {
         status: "someday",
       });
     }
+
+    // Refresh home tab
+    await refreshHomeTab(user.slackUserId, slackTeam.id);
+
+    return {
+      response_action: "clear",
+    };
+  }
+
+  // Handle add project modal submission
+  if (
+    type === "view_submission" &&
+    view?.callback_id === "add_project_modal"
+  ) {
+    const values = view.state.values;
+
+    const name = values.project_name_block.project_name_input.value;
+    const description =
+      values.project_description_block?.project_description_input?.value;
+
+    if (!name) {
+      return {
+        response_action: "errors",
+        errors: {
+          project_name_block: "Project name is required",
+        },
+      };
+    }
+
+    await createProject(user.slackUserId, name, description || undefined);
+
+    // Refresh home tab
+    await refreshHomeTab(user.slackUserId, slackTeam.id);
+
+    return {
+      response_action: "clear",
+    };
+  }
+
+  // Handle add context modal submission
+  if (
+    type === "view_submission" &&
+    view?.callback_id === "add_context_modal"
+  ) {
+    const values = view.state.values;
+
+    const name = values.context_name_block.context_name_input.value;
+
+    if (!name) {
+      return {
+        response_action: "errors",
+        errors: {
+          context_name_block: "Context name is required",
+        },
+      };
+    }
+
+    await createContext(user.slackUserId, name);
 
     // Refresh home tab
     await refreshHomeTab(user.slackUserId, slackTeam.id);

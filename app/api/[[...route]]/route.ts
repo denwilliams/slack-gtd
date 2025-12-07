@@ -14,19 +14,33 @@ app.get("/health", (c) => {
   return c.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Cron endpoint for sending reminders
+// =============================================================================
+// CRON ENDPOINTS - Task Reminder System
+// =============================================================================
+// These endpoints handle automated task reminders for tasks due soon.
+//
+// Schedule: Daily at 9 AM UTC (configured in vercel.json)
+// Vercel Hobby Plan: Limited to once-per-day cron jobs
+//
+// Usage:
+// 1. Automatic: Vercel cron calls /api/cron/reminders daily with CRON_SECRET
+// 2. Manual: Call /api/trigger/reminders with API_SECRET for manual runs
+// =============================================================================
+
+// Automated cron endpoint (called by Vercel cron scheduler)
 app.get("/cron/reminders", async (c) => {
-  // Verify the cron secret to prevent unauthorized access
+  // Security: Verify the CRON_SECRET to prevent unauthorized access
+  // This secret is automatically provided by Vercel's cron service
   const authHeader = c.req.header("Authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
   try {
-    // Find tasks due in the next 24 hours
+    // Find all tasks due in the next 24 hours across all users
     const dueTasks = await getTasksDueSoon(24);
 
-    // Send reminders to users
+    // Send reminder messages to each user via Slack
     const results = await sendTaskReminderBatch(dueTasks);
 
     return c.json({
@@ -37,6 +51,35 @@ app.get("/cron/reminders", async (c) => {
     });
   } catch (error) {
     console.error("Error in cron job:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// Manual trigger endpoint (for external schedulers like GitHub Actions, cron-job.org, etc.)
+app.post("/trigger/reminders", async (c) => {
+  // Security: Verify the API_SECRET to prevent unauthorized access
+  // Set this in your Vercel environment variables
+  const authHeader = c.req.header("Authorization");
+  if (authHeader !== `Bearer ${process.env.API_SECRET}`) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  try {
+    // Find all tasks due in the next 24 hours across all users
+    const dueTasks = await getTasksDueSoon(24);
+
+    // Send reminder messages to each user via Slack
+    const results = await sendTaskReminderBatch(dueTasks);
+
+    return c.json({
+      success: true,
+      remindersSent: results.sent.length,
+      remindersFailed: results.failed.length,
+      tasksChecked: dueTasks.length,
+      triggeredAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Error in manual trigger:", error);
     return c.json({ error: "Internal server error" }, 500);
   }
 });

@@ -78,6 +78,10 @@ SLACK_SIGNING_SECRET=your-signing-secret
 
 # Neon Database
 DATABASE_URL=postgres://username:password@hostname/database?sslmode=require
+
+# Cron Job Security (required for reminders)
+CRON_SECRET=your-random-cron-secret-here
+API_SECRET=your-random-api-secret-here
 ```
 
 ### 4. Run Database Migrations
@@ -134,3 +138,103 @@ vercel --prod
 - `/gtd complete [task-id]` - Mark task as complete
 - `/gtd delete [task-id]` - Delete a task
 - `/gtd help` - Show help message
+
+## Task Reminders & Cron Jobs
+
+The bot automatically sends daily reminders for tasks due in the next 24 hours.
+
+### Automated Reminders (Vercel Cron)
+
+The app uses Vercel's cron job feature to automatically check for upcoming tasks and send reminders:
+
+- **Schedule**: Daily at 9:00 AM UTC
+- **Endpoint**: `/api/cron/reminders` (GET)
+- **Configuration**: Defined in `vercel.json`
+- **Vercel Plan**: Hobby accounts are limited to once-per-day cron jobs
+
+#### Setup for Vercel Cron
+
+1. **Set the CRON_SECRET environment variable** in your Vercel dashboard:
+   ```bash
+   CRON_SECRET=your-random-secret-here
+   ```
+
+2. The cron job is already configured in `vercel.json`:
+   ```json
+   {
+     "crons": [
+       {
+         "path": "/api/cron/reminders",
+         "schedule": "0 9 * * *"
+       }
+     ]
+   }
+   ```
+
+3. Deploy to Vercel - the cron job will automatically run daily
+
+### Manual Trigger (External Schedulers)
+
+If you want more frequent reminders or want to use an external scheduler (GitHub Actions, cron-job.org, etc.), you can call the manual trigger endpoint:
+
+- **Endpoint**: `/api/trigger/reminders` (POST)
+- **Authentication**: Bearer token with `API_SECRET`
+
+#### Setup for Manual Triggers
+
+1. **Set the API_SECRET environment variable** in your Vercel dashboard:
+   ```bash
+   API_SECRET=your-api-secret-here
+   ```
+
+2. **Call the endpoint** from your external scheduler:
+   ```bash
+   curl -X POST https://your-app.vercel.app/api/trigger/reminders \
+     -H "Authorization: Bearer your-api-secret-here"
+   ```
+
+#### Example: GitHub Actions Workflow
+
+Create `.github/workflows/task-reminders.yml`:
+
+```yaml
+name: Send Task Reminders
+
+on:
+  schedule:
+    # Run every 4 hours
+    - cron: '0 */4 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  send-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Reminder Endpoint
+        run: |
+          curl -X POST https://your-app.vercel.app/api/trigger/reminders \
+            -H "Authorization: Bearer ${{ secrets.API_SECRET }}"
+```
+
+Then add `API_SECRET` to your GitHub repository secrets.
+
+### Reminder Response
+
+Both endpoints return the same JSON response:
+
+```json
+{
+  "success": true,
+  "remindersSent": 5,
+  "remindersFailed": 0,
+  "tasksChecked": 10,
+  "triggeredAt": "2025-12-07T09:00:00.000Z"
+}
+```
+
+### Security Notes
+
+- **CRON_SECRET**: Used by Vercel's cron service automatically - keep this secret
+- **API_SECRET**: Used for manual triggers - set to a strong random value
+- Both secrets should be different and stored securely in environment variables
+- Never commit secrets to your repository

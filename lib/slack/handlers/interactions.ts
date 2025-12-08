@@ -10,6 +10,7 @@ import {
   createContext,
   getTaskById,
   updateTaskProjectContext,
+  updateTaskDetails,
   getCompletedTasksWithRelations,
 } from "@/lib/services/tasks";
 import { findOrCreateUser } from "@/lib/services/user";
@@ -222,7 +223,7 @@ export async function handleInteraction(payload: InteractionPayload) {
         const taskId = selectedValue.replace("edit:", "");
         const slack = getSlackClient();
 
-        // Fetch the task to get current project/context
+        // Fetch the task to get current details
         const task = await getTaskById(taskId, user.slackUserId);
         if (!task) {
           return { ok: true };
@@ -234,6 +235,8 @@ export async function handleInteraction(payload: InteractionPayload) {
 
         const modalView = buildEditTaskModal(
           taskId,
+          task.title,
+          task.description,
           task.projectId,
           task.contextId,
           projects,
@@ -534,6 +537,11 @@ export async function handleInteraction(payload: InteractionPayload) {
     const taskId = view.callback_id.replace("edit_task_modal_", "");
     const values = view.state.values;
 
+    // Get title and description
+    const title = values.edit_task_title_block.edit_task_title_input.value;
+    const description =
+      values.edit_task_description_block.edit_task_description_input.value;
+
     // Get selected project (handle "none" value)
     const projectId =
       values.edit_task_project_block?.edit_task_project_input
@@ -548,12 +556,22 @@ export async function handleInteraction(payload: InteractionPayload) {
     const finalContextId =
       contextId && contextId !== "none" ? contextId : null;
 
-    await updateTaskProjectContext(
-      taskId,
-      user.slackUserId,
-      finalProjectId,
-      finalContextId,
-    );
+    // Validate title
+    if (!title) {
+      return {
+        response_action: "errors",
+        errors: {
+          edit_task_title_block: "Task title is required",
+        },
+      };
+    }
+
+    await updateTaskDetails(taskId, user.slackUserId, {
+      title,
+      description: description || null,
+      projectId: finalProjectId,
+      contextId: finalContextId,
+    });
 
     // Refresh home tab
     await refreshHomeTab(user.slackUserId, slackTeam.id);

@@ -23,6 +23,7 @@ import {
   buildAddContextModal,
   buildEditTaskModal,
   buildSetPriorityModal,
+  buildDeleteConfirmationModal,
 } from "@/lib/slack/blocks";
 
 interface BlockAction {
@@ -256,15 +257,15 @@ export async function handleInteraction(payload: InteractionPayload) {
         return { ok: true };
       } else if (selectedValue.startsWith("delete:")) {
         const taskId = selectedValue.replace("delete:", "");
-        await deleteTask(taskId, user.slackUserId);
+        const slack = getSlackClient();
+        const modalView = buildDeleteConfirmationModal(taskId);
 
-        // Refresh home tab
-        await refreshHomeTab(user.slackUserId, slackTeam.id);
+        await slack.views.open({
+          trigger_id: payload.trigger_id!,
+          view: modalView,
+        });
 
-        return {
-          response_action: "update",
-          view: {},
-        };
+        return { ok: true };
       }
     }
 
@@ -552,6 +553,22 @@ export async function handleInteraction(payload: InteractionPayload) {
     if (priority) {
       await updateTaskPriority(taskId, user.slackUserId, priority);
     }
+
+    // Refresh home tab
+    await refreshHomeTab(user.slackUserId, slackTeam.id);
+
+    return {
+      response_action: "clear",
+    };
+  }
+
+  // Handle delete confirmation modal submission
+  if (
+    type === "view_submission" &&
+    view?.callback_id.startsWith("delete_confirmation_modal_")
+  ) {
+    const taskId = view.callback_id.replace("delete_confirmation_modal_", "");
+    await deleteTask(taskId, user.slackUserId);
 
     // Refresh home tab
     await refreshHomeTab(user.slackUserId, slackTeam.id);

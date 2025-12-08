@@ -17,7 +17,7 @@ app.get("/health", (c) => {
   return c.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Master cron endpoint - runs hourly and dispatches to appropriate reminder handlers
+// Master cron endpoint - runs daily at 9 AM UTC and sends all reminders
 app.get("/cron/reminders", async (c) => {
   // Verify the cron secret to prevent unauthorized access
   const authHeader = c.req.header("Authorization");
@@ -27,15 +27,13 @@ app.get("/cron/reminders", async (c) => {
 
   try {
     const now = new Date();
-    const currentHour = now.getUTCHours();
 
     const results: any = {
       success: true,
       timestamp: now.toISOString(),
-      hour: currentHour,
     };
 
-    // Always send inbox reminders (hourly)
+    // Send inbox reminders
     const usersWithInbox = await getInboxTasksByUser();
     const inboxResults = await sendInboxReminderBatch(usersWithInbox);
     results.inboxReminders = {
@@ -45,16 +43,14 @@ app.get("/cron/reminders", async (c) => {
       totalInboxItems: usersWithInbox.reduce((sum, u) => sum + u.tasks.length, 0),
     };
 
-    // Only send due-task reminders at 9 AM UTC
-    if (currentHour === 9) {
-      const dueTasks = await getTasksDueSoon(24);
-      const dueTaskResults = await sendTaskReminderBatch(dueTasks);
-      results.dueTaskReminders = {
-        sent: dueTaskResults.sent.length,
-        failed: dueTaskResults.failed.length,
-        tasksChecked: dueTasks.length,
-      };
-    }
+    // Send due-task reminders
+    const dueTasks = await getTasksDueSoon(24);
+    const dueTaskResults = await sendTaskReminderBatch(dueTasks);
+    results.dueTaskReminders = {
+      sent: dueTaskResults.sent.length,
+      failed: dueTaskResults.failed.length,
+      tasksChecked: dueTasks.length,
+    };
 
     return c.json(results);
   } catch (error) {

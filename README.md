@@ -9,7 +9,7 @@ A Slack bot that helps you implement the Getting Things Done (GTD) methodology b
 - Review and manage your tasks with simple commands.
 - **Automated Reminders:**
   - Daily reminders at 9 AM UTC for tasks due within 24 hours
-  - Hourly inbox reminders (every hour on the hour) for unprocessed items in your inbox
+  - Daily inbox reminders at 9 AM UTC for unprocessed items in your inbox
 - User-friendly "Home" interface within Slack that displays your tasks and projects with buttons for actions.
 - Supports multiple users on the same Slack workspace (each user has their own task list).
 
@@ -151,7 +151,7 @@ vercel --prod
 
 ## Automated Reminders
 
-The bot includes two automated reminder systems to help you stay on top of your tasks:
+The bot includes two automated reminder systems that run daily to help you stay on top of your tasks:
 
 ### 1. Daily Due Task Reminders
 - **Schedule:** Every day at 9:00 AM UTC
@@ -159,8 +159,8 @@ The bot includes two automated reminder systems to help you stay on top of your 
 - **Message format:** Shows task title, description, and due date
 - **Delivery:** Sent as a Slack DM to each user with upcoming tasks
 
-### 2. Hourly Inbox Reminders
-- **Schedule:** Every hour on the hour (0:00, 1:00, 2:00, etc.)
+### 2. Daily Inbox Reminders
+- **Schedule:** Every day at 9:00 AM UTC
 - **Purpose:** Reminds you to process items sitting in your inbox (following GTD methodology)
 - **Message format:** Shows count of inbox items and lists up to 5 tasks
 - **Delivery:** Sent as a Slack DM only to users who have items in their inbox
@@ -170,10 +170,9 @@ The bot includes two automated reminder systems to help you stay on top of your 
 
 The reminder system uses a **master endpoint** with **individual reminder endpoints**:
 
-- **`/api/cron/reminders`** (Master) - Runs hourly via Vercel Cron
-  - Always sends inbox reminders (every hour)
-  - Only sends due-task reminders at 9 AM UTC
-  - Single cron entry in `vercel.json`
+- **`/api/cron/reminders`** (Master) - Runs daily at 9 AM UTC via Vercel Cron
+  - Sends both inbox reminders AND due-task reminders
+  - Single cron entry in `vercel.json` (Vercel limit: max 1 cron job per day on free plan)
 
 - **`/api/cron/inbox-reminders`** (Individual) - Can be called directly for testing
   - Sends inbox reminders to users with unprocessed items
@@ -182,7 +181,7 @@ The reminder system uses a **master endpoint** with **individual reminder endpoi
   - Sends reminders for tasks due within 24 hours
 
 **Requirements:**
-- Vercel Pro or Enterprise plan (for cron job support)
+- Vercel account (cron jobs available on all plans, limited to 1/day on free tier)
 - `CRON_SECRET` environment variable configured in Vercel
 
 **Note:** Individual endpoints are useful for manual testing but the master endpoint is used by the cron scheduler.

@@ -232,6 +232,14 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             {
               text: {
                 type: "plain_text",
+                text: "✅ Complete",
+                emoji: true,
+              },
+              value: `complete:${task.id}`,
+            },
+            {
+              text: {
+                type: "plain_text",
                 text: "🎯 Set Priority",
                 emoji: true,
               },
@@ -297,24 +305,6 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         type: "context",
         elements: contextElements,
       });
-
-      // Add complete button
-      blocks.push({
-        type: "actions",
-        elements: [
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "Complete",
-              emoji: true,
-            },
-            style: "primary",
-            value: task.id,
-            action_id: `complete_task_${task.id}`,
-          },
-        ],
-      });
     });
 
     if (nextActionTasks.length > 10) {
@@ -363,6 +353,14 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         accessory: {
           type: "overflow",
           options: [
+            {
+              text: {
+                type: "plain_text",
+                text: "✅ Complete",
+                emoji: true,
+              },
+              value: `complete:${task.id}`,
+            },
             {
               text: {
                 type: "plain_text",
@@ -427,23 +425,6 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         type: "context",
         elements: contextElements,
       });
-
-      blocks.push({
-        type: "actions",
-        elements: [
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "Complete",
-              emoji: true,
-            },
-            style: "primary",
-            value: task.id,
-            action_id: `complete_task_${task.id}`,
-          },
-        ],
-      });
     });
 
     blocks.push({
@@ -472,6 +453,14 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         accessory: {
           type: "overflow",
           options: [
+            {
+              text: {
+                type: "plain_text",
+                text: "✅ Mark as Done",
+                emoji: true,
+              },
+              value: `complete:${task.id}`,
+            },
             {
               text: {
                 type: "plain_text",
@@ -536,23 +525,6 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
           elements: contextElements,
         });
       }
-
-      blocks.push({
-        type: "actions",
-        elements: [
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "Mark as Done",
-              emoji: true,
-            },
-            style: "primary",
-            value: task.id,
-            action_id: `complete_task_${task.id}`,
-          },
-        ],
-      });
     });
 
     blocks.push({

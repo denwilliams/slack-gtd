@@ -188,12 +188,23 @@ export async function handleInteraction(payload: InteractionPayload) {
       return { ok: true };
     }
 
-    // Handle overflow menu (set priority, edit, move, or delete)
+    // Handle overflow menu (complete, set priority, edit, move, or delete)
     if (action.action_id.startsWith("task_overflow_")) {
       const selectedValue = action.selected_option?.value!;
 
-      // Parse the value format: "set_priority:taskId", "edit:taskId", "move:taskId", or "delete:taskId"
-      if (selectedValue.startsWith("set_priority:")) {
+      // Parse the value format: "complete:taskId", "set_priority:taskId", "edit:taskId", "move:taskId", or "delete:taskId"
+      if (selectedValue.startsWith("complete:")) {
+        const taskId = selectedValue.replace("complete:", "");
+        await completeTask(taskId, user.slackUserId);
+
+        // Refresh home tab
+        await refreshHomeTab(user.slackUserId, slackTeam.id);
+
+        return {
+          response_action: "update",
+          view: {},
+        };
+      } else if (selectedValue.startsWith("set_priority:")) {
         const taskId = selectedValue.replace("set_priority:", "");
         const slack = getSlackClient();
         const modalView = buildSetPriorityModal(taskId);

@@ -1276,12 +1276,57 @@ export function buildAddContextModal(): View {
 
 export function buildEditTaskModal(
   taskId: string,
+  currentTitle: string,
+  currentDescription: string | null,
   currentProjectId: string | null,
   currentContextId: string | null,
   userProjects: Array<typeof projects.$inferSelect>,
   userContexts: Array<typeof contexts.$inferSelect>,
 ): View {
   const blocks: any[] = [];
+
+  // Add title input field
+  blocks.push({
+    type: "input",
+    block_id: "edit_task_title_block",
+    element: {
+      type: "plain_text_input",
+      action_id: "edit_task_title_input",
+      placeholder: {
+        type: "plain_text",
+        text: "Enter task title",
+      },
+      initial_value: currentTitle,
+      max_length: 500,
+    },
+    label: {
+      type: "plain_text",
+      text: "Task Title",
+      emoji: true,
+    },
+  });
+
+  // Add description input field
+  blocks.push({
+    type: "input",
+    block_id: "edit_task_description_block",
+    element: {
+      type: "plain_text_input",
+      action_id: "edit_task_description_input",
+      multiline: true,
+      placeholder: {
+        type: "plain_text",
+        text: "Add more details (optional)",
+      },
+      initial_value: currentDescription || "",
+    },
+    label: {
+      type: "plain_text",
+      text: "Description",
+      emoji: true,
+    },
+    optional: true,
+  });
 
   // Add project selector
   if (userProjects.length > 0) {
@@ -1399,17 +1444,6 @@ export function buildEditTaskModal(
     }
 
     blocks.push(contextBlock);
-  }
-
-  // If no projects or contexts, show a message
-  if (blocks.length === 0) {
-    blocks.push({
-      type: "section",
-      text: {
-        type: "mrkdwn",
-        text: "You don't have any projects or contexts yet.\n\nCreate them using the buttons on the Home tab!",
-      },
-    });
   }
 
   return {

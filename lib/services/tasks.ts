@@ -128,6 +128,31 @@ export async function updateTaskProjectContext(
   return task[0];
 }
 
+export async function updateTaskDetails(
+  taskId: string,
+  userId: string,
+  options: {
+    title?: string;
+    description?: string | null;
+    projectId?: string | null;
+    contextId?: string | null;
+  },
+) {
+  const task = await db
+    .update(tasks)
+    .set({
+      title: options.title,
+      description: options.description,
+      projectId: options.projectId,
+      contextId: options.contextId,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(tasks.id, taskId), eq(tasks.slackUserId, userId)))
+    .returning();
+
+  return task[0];
+}
+
 export async function clarifyTask(
   taskId: string,
   userId: string,

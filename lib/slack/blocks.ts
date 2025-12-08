@@ -138,7 +138,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         },
       });
 
-      // Add context with project and context info
+      // Add context with project, context, time, and energy info
       const contextElements: { type: "mrkdwn"; text: string }[] = [];
       if (project) {
         contextElements.push({
@@ -150,6 +150,20 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         contextElements.push({
           type: "mrkdwn" as const,
           text: `🏷️ ${context.name}`,
+        });
+      }
+      const timeLabel = getTimeEstimateLabel(task.timeEstimate);
+      if (timeLabel) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: timeLabel,
+        });
+      }
+      const energyLabel = getEnergyLevelLabel(task.energyLevel);
+      if (energyLabel) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: energyLabel,
         });
       }
       contextElements.push({
@@ -268,7 +282,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
 
       blocks.push(taskBlock);
 
-      // Add context with project, context, due date, and priority
+      // Add context with project, context, due date, priority, time, and energy
       const contextElements: { type: "mrkdwn"; text: string }[] = [];
       if (project) {
         contextElements.push({
@@ -292,6 +306,20 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         type: "mrkdwn" as const,
         text: `${getPriorityEmoji(task.priority || "medium")} ${task.priority || "medium"}`,
       });
+      const timeLabel = getTimeEstimateLabel(task.timeEstimate);
+      if (timeLabel) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: timeLabel,
+        });
+      }
+      const energyLabel = getEnergyLevelLabel(task.energyLevel);
+      if (energyLabel) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: energyLabel,
+        });
+      }
 
       blocks.push({
         type: "context",
@@ -400,7 +428,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         },
       });
 
-      // Add context with project, context, due date, and priority
+      // Add context with project, context, due date, priority, time, and energy
       const contextElements: { type: "mrkdwn"; text: string }[] = [];
       if (project) {
         contextElements.push({
@@ -422,6 +450,20 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         type: "mrkdwn" as const,
         text: `${getPriorityEmoji(task.priority || "medium")} ${task.priority || "medium"}`,
       });
+      const timeLabel = getTimeEstimateLabel(task.timeEstimate);
+      if (timeLabel) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: timeLabel,
+        });
+      }
+      const energyLabel = getEnergyLevelLabel(task.energyLevel);
+      if (energyLabel) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: energyLabel,
+        });
+      }
 
       blocks.push({
         type: "context",
@@ -509,7 +551,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         },
       });
 
-      // Add context with project, context, and delegated person
+      // Add context with project, context, delegated person, time, and energy
       const contextElements: { type: "mrkdwn"; text: string }[] = [];
       if (project) {
         contextElements.push({
@@ -527,6 +569,20 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         contextElements.push({
           type: "mrkdwn" as const,
           text: `👤 Waiting for: ${task.delegatedTo}`,
+        });
+      }
+      const timeLabel = getTimeEstimateLabel(task.timeEstimate);
+      if (timeLabel) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: timeLabel,
+        });
+      }
+      const energyLabel = getEnergyLevelLabel(task.energyLevel);
+      if (energyLabel) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: energyLabel,
         });
       }
 
@@ -618,7 +674,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         },
       });
 
-      // Add context with project and context info
+      // Add context with project, context, time, and energy info
       const contextElements: { type: "mrkdwn"; text: string }[] = [];
       if (project) {
         contextElements.push({
@@ -630,6 +686,20 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         contextElements.push({
           type: "mrkdwn" as const,
           text: `🏷️ ${context.name}`,
+        });
+      }
+      const timeLabel = getTimeEstimateLabel(task.timeEstimate);
+      if (timeLabel) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: timeLabel,
+        });
+      }
+      const energyLabel = getEnergyLevelLabel(task.energyLevel);
+      if (energyLabel) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: energyLabel,
         });
       }
 
@@ -679,6 +749,36 @@ function getPriorityEmoji(priority: string): string {
       return "🟢";
     default:
       return "⚪";
+  }
+}
+
+function getTimeEstimateLabel(timeEstimate: string | null): string | null {
+  if (!timeEstimate) return null;
+  switch (timeEstimate) {
+    case "quick":
+      return "⚡ <5min";
+    case "30min":
+      return "⏱️ 30min";
+    case "1hr":
+      return "⏰ 1hr";
+    case "2hr+":
+      return "⏳ 2hr+";
+    default:
+      return null;
+  }
+}
+
+function getEnergyLevelLabel(energyLevel: string | null): string | null {
+  if (!energyLevel) return null;
+  switch (energyLevel) {
+    case "high":
+      return "🔋 High";
+    case "medium":
+      return "🔌 Med";
+    case "low":
+      return "💤 Low";
+    default:
+      return null;
   }
 }
 
@@ -1144,6 +1244,106 @@ export function buildAddTaskModal(
     },
   });
 
+  // Add time estimate selector
+  blocks.push({
+    type: "input",
+    block_id: "task_time_estimate_block",
+    element: {
+      type: "static_select",
+      action_id: "task_time_estimate_input",
+      placeholder: {
+        type: "plain_text",
+        text: "How long will this take?",
+      },
+      options: [
+        {
+          text: {
+            type: "plain_text",
+            text: "⚡ Quick (<5 min)",
+            emoji: true,
+          },
+          value: "quick",
+        },
+        {
+          text: {
+            type: "plain_text",
+            text: "⏱️ 30 minutes",
+            emoji: true,
+          },
+          value: "30min",
+        },
+        {
+          text: {
+            type: "plain_text",
+            text: "⏰ 1 hour",
+            emoji: true,
+          },
+          value: "1hr",
+        },
+        {
+          text: {
+            type: "plain_text",
+            text: "⏳ 2+ hours",
+            emoji: true,
+          },
+          value: "2hr+",
+        },
+      ],
+    },
+    label: {
+      type: "plain_text",
+      text: "⏱️ Time Estimate",
+      emoji: true,
+    },
+    optional: true,
+  });
+
+  // Add energy level selector
+  blocks.push({
+    type: "input",
+    block_id: "task_energy_level_block",
+    element: {
+      type: "static_select",
+      action_id: "task_energy_level_input",
+      placeholder: {
+        type: "plain_text",
+        text: "Energy level required?",
+      },
+      options: [
+        {
+          text: {
+            type: "plain_text",
+            text: "🔋 High Energy",
+            emoji: true,
+          },
+          value: "high",
+        },
+        {
+          text: {
+            type: "plain_text",
+            text: "🔌 Medium Energy",
+            emoji: true,
+          },
+          value: "medium",
+        },
+        {
+          text: {
+            type: "plain_text",
+            text: "💤 Low Energy",
+            emoji: true,
+          },
+          value: "low",
+        },
+      ],
+    },
+    label: {
+      type: "plain_text",
+      text: "⚡ Energy Level",
+      emoji: true,
+    },
+    optional: true,
+  });
+
   return {
     type: "modal",
     callback_id: "add_task_modal",
@@ -1273,6 +1473,8 @@ export function buildEditTaskModal(
   taskId: string,
   currentProjectId: string | null,
   currentContextId: string | null,
+  currentTimeEstimate: string | null,
+  currentEnergyLevel: string | null,
   userProjects: Array<typeof projects.$inferSelect>,
   userContexts: Array<typeof contexts.$inferSelect>,
 ): View {
@@ -1396,13 +1598,175 @@ export function buildEditTaskModal(
     blocks.push(contextBlock);
   }
 
-  // If no projects or contexts, show a message
-  if (blocks.length === 0) {
-    blocks.push({
+  // Add time estimate selector
+  const timeEstimateBlock: any = {
+    type: "input",
+    block_id: "edit_task_time_estimate_block",
+    element: {
+      type: "static_select",
+      action_id: "edit_task_time_estimate_input",
+      placeholder: {
+        type: "plain_text",
+        text: "How long will this take?",
+      },
+      options: [
+        {
+          text: {
+            type: "plain_text",
+            text: "None",
+            emoji: true,
+          },
+          value: "none",
+        },
+        {
+          text: {
+            type: "plain_text",
+            text: "⚡ Quick (<5 min)",
+            emoji: true,
+          },
+          value: "quick",
+        },
+        {
+          text: {
+            type: "plain_text",
+            text: "⏱️ 30 minutes",
+            emoji: true,
+          },
+          value: "30min",
+        },
+        {
+          text: {
+            type: "plain_text",
+            text: "⏰ 1 hour",
+            emoji: true,
+          },
+          value: "1hr",
+        },
+        {
+          text: {
+            type: "plain_text",
+            text: "⏳ 2+ hours",
+            emoji: true,
+          },
+          value: "2hr+",
+        },
+      ],
+    },
+    label: {
+      type: "plain_text",
+      text: "⏱️ Time Estimate",
+      emoji: true,
+    },
+    optional: true,
+  };
+
+  // Set initial option if task has a time estimate
+  if (currentTimeEstimate) {
+    const timeOptions = {
+      quick: "⚡ Quick (<5 min)",
+      "30min": "⏱️ 30 minutes",
+      "1hr": "⏰ 1 hour",
+      "2hr+": "⏳ 2+ hours",
+    } as const;
+    const timeLabel = timeOptions[currentTimeEstimate as keyof typeof timeOptions];
+    if (timeLabel) {
+      timeEstimateBlock.element.initial_option = {
+        text: {
+          type: "plain_text",
+          text: timeLabel,
+          emoji: true,
+        },
+        value: currentTimeEstimate,
+      };
+    }
+  }
+
+  blocks.push(timeEstimateBlock);
+
+  // Add energy level selector
+  const energyLevelBlock: any = {
+    type: "input",
+    block_id: "edit_task_energy_level_block",
+    element: {
+      type: "static_select",
+      action_id: "edit_task_energy_level_input",
+      placeholder: {
+        type: "plain_text",
+        text: "Energy level required?",
+      },
+      options: [
+        {
+          text: {
+            type: "plain_text",
+            text: "None",
+            emoji: true,
+          },
+          value: "none",
+        },
+        {
+          text: {
+            type: "plain_text",
+            text: "🔋 High Energy",
+            emoji: true,
+          },
+          value: "high",
+        },
+        {
+          text: {
+            type: "plain_text",
+            text: "🔌 Medium Energy",
+            emoji: true,
+          },
+          value: "medium",
+        },
+        {
+          text: {
+            type: "plain_text",
+            text: "💤 Low Energy",
+            emoji: true,
+          },
+          value: "low",
+        },
+      ],
+    },
+    label: {
+      type: "plain_text",
+      text: "⚡ Energy Level",
+      emoji: true,
+    },
+    optional: true,
+  };
+
+  // Set initial option if task has an energy level
+  if (currentEnergyLevel) {
+    const energyOptions = {
+      high: "🔋 High Energy",
+      medium: "🔌 Medium Energy",
+      low: "💤 Low Energy",
+    } as const;
+    const energyLabel = energyOptions[currentEnergyLevel as keyof typeof energyOptions];
+    if (energyLabel) {
+      energyLevelBlock.element.initial_option = {
+        text: {
+          type: "plain_text",
+          text: energyLabel,
+          emoji: true,
+        },
+        value: currentEnergyLevel,
+      };
+    }
+  }
+
+  blocks.push(energyLevelBlock);
+
+  // If no projects or contexts, show a message (but still show time/energy fields)
+  if (userProjects.length === 0 && userContexts.length === 0) {
+    // Insert message at the beginning
+    blocks.unshift({
       type: "section",
       text: {
         type: "mrkdwn",
-        text: "You don't have any projects or contexts yet.\n\nCreate them using the buttons on the Home tab!",
+        text: "_You don't have any projects or contexts yet. Create them using the buttons on the Home tab!_",
       },
     });
   }

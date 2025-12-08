@@ -48,6 +48,8 @@ export const tasks = pgTable("tasks", {
   status: varchar("status", { length: 20 }).default("inbox").notNull(), // inbox, active, completed, someday, waiting, archived
   completedAt: timestamp("completed_at"),
   delegatedTo: varchar("delegated_to", { length: 255 }), // For "waiting for" items
+  timeEstimate: varchar("time_estimate", { length: 20 }), // quick, 30min, 1hr, 2hr+
+  energyLevel: varchar("energy_level", { length: 20 }), // high, medium, low
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

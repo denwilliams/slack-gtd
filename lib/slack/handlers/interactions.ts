@@ -10,6 +10,7 @@ import {
   createContext,
   getTaskById,
   updateTaskProjectContext,
+  updateTaskDetails,
 } from "@/lib/services/tasks";
 import { findOrCreateUser } from "@/lib/services/user";
 import { refreshHomeTab } from "./home";
@@ -80,6 +81,10 @@ export async function handleInteraction(payload: InteractionPayload) {
       values.task_project_block?.task_project_input?.selected_option?.value;
     const contextId =
       values.task_context_block?.task_context_input?.selected_option?.value;
+    const timeEstimate =
+      values.task_time_estimate_block?.task_time_estimate_input?.selected_option?.value;
+    const energyLevel =
+      values.task_energy_level_block?.task_energy_level_input?.selected_option?.value;
 
     if (!title) {
       return {
@@ -95,6 +100,8 @@ export async function handleInteraction(payload: InteractionPayload) {
       priority: (priority as "high" | "medium" | "low") || "medium",
       projectId: projectId || undefined,
       contextId: contextId || undefined,
+      timeEstimate: (timeEstimate as "quick" | "30min" | "1hr" | "2hr+") || undefined,
+      energyLevel: (energyLevel as "high" | "medium" | "low") || undefined,
     });
 
     // Refresh home tab
@@ -208,7 +215,7 @@ export async function handleInteraction(payload: InteractionPayload) {
         const taskId = selectedValue.replace("edit:", "");
         const slack = getSlackClient();
 
-        // Fetch the task to get current project/context
+        // Fetch the task to get current project/context/time/energy
         const task = await getTaskById(taskId, user.slackUserId);
         if (!task) {
           return { ok: true };
@@ -222,6 +229,8 @@ export async function handleInteraction(payload: InteractionPayload) {
           taskId,
           task.projectId,
           task.contextId,
+          task.timeEstimate,
+          task.energyLevel,
           projects,
           contexts,
         );
@@ -512,11 +521,27 @@ export async function handleInteraction(payload: InteractionPayload) {
     const finalContextId =
       contextId && contextId !== "none" ? contextId : null;
 
-    await updateTaskProjectContext(
+    // Get selected time estimate (handle "none" value)
+    const timeEstimate =
+      values.edit_task_time_estimate_block?.edit_task_time_estimate_input
+        ?.selected_option?.value;
+    const finalTimeEstimate =
+      timeEstimate && timeEstimate !== "none" ? (timeEstimate as "quick" | "30min" | "1hr" | "2hr+") : null;
+
+    // Get selected energy level (handle "none" value)
+    const energyLevel =
+      values.edit_task_energy_level_block?.edit_task_energy_level_input
+        ?.selected_option?.value;
+    const finalEnergyLevel =
+      energyLevel && energyLevel !== "none" ? (energyLevel as "high" | "medium" | "low") : null;
+
+    await updateTaskDetails(
       taskId,
       user.slackUserId,
       finalProjectId,
       finalContextId,
+      finalTimeEstimate,
+      finalEnergyLevel,
     );
 
     // Refresh home tab

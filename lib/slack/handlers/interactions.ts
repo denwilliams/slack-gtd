@@ -11,6 +11,7 @@ import {
   getTaskById,
   updateTaskProjectContext,
   updateTaskDetails,
+  getCompletedTasksWithRelations,
 } from "@/lib/services/tasks";
 import { findOrCreateUser } from "@/lib/services/user";
 import { refreshHomeTab } from "./home";
@@ -24,6 +25,7 @@ import {
   buildAddContextModal,
   buildEditTaskModal,
   buildSetPriorityModal,
+  buildReviewDoneModal,
   buildDeleteConfirmationModal,
 } from "@/lib/slack/blocks";
 
@@ -335,6 +337,23 @@ export async function handleInteraction(payload: InteractionPayload) {
     if (action.action_id === "open_add_context_modal") {
       const slack = getSlackClient();
       const modalView = buildAddContextModal();
+
+      await slack.views.open({
+        trigger_id: payload.trigger_id!,
+        view: modalView,
+      });
+
+      return { ok: true };
+    }
+
+    // Handle open review done modal
+    if (action.action_id === "open_review_done_modal") {
+      const slack = getSlackClient();
+
+      // Fetch completed tasks for the user
+      const completedTasks = await getCompletedTasksWithRelations(user.slackUserId);
+
+      const modalView = buildReviewDoneModal(completedTasks);
 
       await slack.views.open({
         trigger_id: payload.trigger_id!,

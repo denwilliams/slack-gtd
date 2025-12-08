@@ -273,3 +273,37 @@ export async function getInboxTasksByUser() {
 
   return Array.from(tasksByUser.values());
 }
+
+export async function getCompletedTaskCount(userId: string, daysAgo: number) {
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - daysAgo);
+
+  const result = await db
+    .select()
+    .from(tasks)
+    .where(
+      and(
+        eq(tasks.slackUserId, userId),
+        eq(tasks.status, "completed"),
+        gte(tasks.completedAt, cutoffDate),
+      ),
+    );
+
+  return result.length;
+}
+
+export async function getCompletedTasksWithRelations(userId: string) {
+  const result = await db
+    .select({
+      task: tasks,
+      project: projects,
+      context: contexts,
+    })
+    .from(tasks)
+    .leftJoin(projects, eq(tasks.projectId, projects.id))
+    .leftJoin(contexts, eq(tasks.contextId, contexts.id))
+    .where(and(eq(tasks.slackUserId, userId), eq(tasks.status, "completed")))
+    .orderBy(desc(tasks.completedAt));
+
+  return result;
+}

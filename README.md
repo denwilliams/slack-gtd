@@ -166,6 +166,23 @@ The bot includes two automated reminder systems to help you stay on top of your 
 - **Delivery:** Sent as a Slack DM only to users who have items in their inbox
 - **Benefit:** Encourages regular inbox processing to keep your GTD system flowing
 
-Both reminder systems require:
+### Architecture
+
+The reminder system uses a **master endpoint** with **individual reminder endpoints**:
+
+- **`/api/cron/reminders`** (Master) - Runs hourly via Vercel Cron
+  - Always sends inbox reminders (every hour)
+  - Only sends due-task reminders at 9 AM UTC
+  - Single cron entry in `vercel.json`
+
+- **`/api/cron/inbox-reminders`** (Individual) - Can be called directly for testing
+  - Sends inbox reminders to users with unprocessed items
+
+- **`/api/cron/due-task-reminders`** (Individual) - Can be called directly for testing
+  - Sends reminders for tasks due within 24 hours
+
+**Requirements:**
 - Vercel Pro or Enterprise plan (for cron job support)
 - `CRON_SECRET` environment variable configured in Vercel
+
+**Note:** Individual endpoints are useful for manual testing but the master endpoint is used by the cron scheduler.

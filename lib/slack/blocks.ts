@@ -17,6 +17,8 @@ interface GTDTasks {
   active: Array<TaskWithRelations>;
   waiting: Array<TaskWithRelations>;
   someday: Array<TaskWithRelations>;
+  completed7Days: number;
+  completed30Days: number;
 }
 
 export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
@@ -25,6 +27,8 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
     active: allActiveTasks,
     waiting: waitingTasks,
     someday: somedayTasks,
+    completed7Days,
+    completed30Days,
   } = tasksByStatus;
 
   // Separate active tasks into scheduled (with due date) and next actions (without due date)
@@ -70,7 +74,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
       elements: [
         {
           type: "mrkdwn",
-          text: `📥 Inbox: *${inboxTasks.length}* • ✅ Next Actions: *${nextActionTasks.length}* • 📅 Scheduled: *${scheduledTasks.length}* • ⏳ Waiting: *${waitingTasks.length}* • 💭 Someday: *${somedayTasks.length}*`,
+          text: `📥 Inbox: *${inboxTasks.length}* • ✅ Next Actions: *${nextActionTasks.length}* • 📅 Scheduled: *${scheduledTasks.length}* • ⏳ Waiting: *${waitingTasks.length}* • 💭 Someday: *${somedayTasks.length}* • ✔️ Done (7d): *${completed7Days}* • ✔️ Done (30d): *${completed30Days}*`,
         },
       ],
     },
@@ -104,6 +108,15 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             emoji: true,
           },
           action_id: "open_add_context_modal",
+        },
+        {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "🔍 Review Done",
+            emoji: true,
+          },
+          action_id: "open_review_done_modal",
         },
       ],
     },
@@ -1502,6 +1515,139 @@ export function buildSetPriorityModal(taskId: string): View {
         },
       },
     ],
+  };
+}
+
+export function buildReviewDoneModal(
+  completedTasks: Array<TaskWithRelations>,
+): View {
+  const blocks: (KnownBlock | Block)[] = [];
+
+  if (completedTasks.length === 0) {
+    blocks.push({
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: "🎉 No completed tasks yet. Start completing tasks to see them here!",
+      },
+    });
+  } else {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    let added7DayDivider = false;
+    let added30DayDivider = false;
+
+    blocks.push({
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `*Total Completed Tasks:* ${completedTasks.length}`,
+      },
+    });
+
+    blocks.push({
+      type: "divider",
+    });
+
+    completedTasks.forEach(({ task, project, context }) => {
+      const completedDate = task.completedAt;
+
+      // Add 7-day divider if needed
+      if (!added7DayDivider && completedDate && completedDate < sevenDaysAgo) {
+        blocks.push({
+          type: "header",
+          text: {
+            type: "plain_text",
+            text: "— Completed 7-30 Days Ago —",
+            emoji: true,
+          },
+        });
+        blocks.push({
+          type: "divider",
+        });
+        added7DayDivider = true;
+      }
+
+      // Add 30-day divider if needed
+      if (!added30DayDivider && completedDate && completedDate < thirtyDaysAgo) {
+        blocks.push({
+          type: "header",
+          text: {
+            type: "plain_text",
+            text: "— Completed Over 30 Days Ago —",
+            emoji: true,
+          },
+        });
+        blocks.push({
+          type: "divider",
+        });
+        added30DayDivider = true;
+      }
+
+      // Task section with strikethrough
+      let taskText = `~${task.title}~`;
+      if (task.description?.trim()) {
+        taskText += `\n~${task.description.trim()}~`;
+      }
+
+      blocks.push({
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: taskText,
+        },
+      });
+
+      // Add context with project, context, and completion date
+      const contextElements: { type: "mrkdwn"; text: string }[] = [];
+      if (project) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: `📁 ${project.name}`,
+        });
+      }
+      if (context) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: `🏷️ ${context.name}`,
+        });
+      }
+      if (completedDate) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: `✅ Completed: ${completedDate.toISOString().split("T")[0]}`,
+        });
+      }
+
+      if (contextElements.length > 0) {
+        blocks.push({
+          type: "context",
+          elements: contextElements,
+        });
+      }
+
+      blocks.push({
+        type: "divider",
+      });
+    });
+  }
+
+  return {
+    type: "modal",
+    callback_id: "review_done_modal",
+    title: {
+      type: "plain_text",
+      text: "Review Completed",
+      emoji: true,
+    },
+    close: {
+      type: "plain_text",
+      text: "Close",
+      emoji: true,
+    },
+    blocks,
   };
 }
 

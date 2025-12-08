@@ -1586,10 +1586,10 @@ export function buildReviewDoneModal(
         added30DayDivider = true;
       }
 
-      // Task section with strikethrough
-      let taskText = `~${task.title}~`;
+      // Task section
+      let taskText = `*${task.title}*`;
       if (task.description?.trim()) {
-        taskText += `\n~${task.description.trim()}~`;
+        taskText += `\n${task.description.trim()}`;
       }
 
       blocks.push({

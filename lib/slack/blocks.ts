@@ -916,6 +916,14 @@ export function buildMoveTaskModal(taskId: string): View {
             {
               text: {
                 type: "plain_text",
+                text: "✅ Next Actions",
+                emoji: true,
+              },
+              value: "next_actions",
+            },
+            {
+              text: {
+                type: "plain_text",
                 text: "📅 Scheduled (set due date)",
                 emoji: true,
               },

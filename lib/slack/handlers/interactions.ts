@@ -420,7 +420,12 @@ export async function handleInteraction(payload: InteractionPayload) {
     const dueDate = values.due_date_block?.due_date_input?.selected_date;
     const delegatedTo = values.delegated_to_block?.delegated_to_input?.value;
 
-    if (moveTo === "scheduled") {
+    if (moveTo === "next_actions") {
+      await clarifyTask(taskId, user.slackUserId, {
+        status: "active",
+        dueDate: null,
+      });
+    } else if (moveTo === "scheduled") {
       await clarifyTask(taskId, user.slackUserId, {
         status: "active",
         dueDate: dueDate ? new Date(dueDate) : new Date(),

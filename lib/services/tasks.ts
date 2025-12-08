@@ -134,7 +134,7 @@ export async function clarifyTask(
   options: {
     status: "active" | "someday" | "waiting" | "archived";
     priority?: "high" | "medium" | "low";
-    dueDate?: Date;
+    dueDate?: Date | null;
     delegatedTo?: string;
   },
 ) {

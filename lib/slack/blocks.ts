@@ -189,6 +189,11 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
           },
         ],
       });
+
+      // Add divider between tasks
+      blocks.push({
+        type: "divider",
+      });
     });
 
     if (inboxTasks.length > 5) {
@@ -304,6 +309,11 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
       blocks.push({
         type: "context",
         elements: contextElements,
+      });
+
+      // Add divider between tasks
+      blocks.push({
+        type: "divider",
       });
     });
 
@@ -425,6 +435,11 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         type: "context",
         elements: contextElements,
       });
+
+      // Add divider between tasks
+      blocks.push({
+        type: "divider",
+      });
     });
 
     blocks.push({
@@ -525,6 +540,11 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
           elements: contextElements,
         });
       }
+
+      // Add divider between tasks
+      blocks.push({
+        type: "divider",
+      });
     });
 
     blocks.push({
@@ -627,6 +647,11 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             action_id: `activate_task_${task.id}`,
           },
         ],
+      });
+
+      // Add divider between tasks
+      blocks.push({
+        type: "divider",
       });
     });
 

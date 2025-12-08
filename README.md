@@ -7,7 +7,9 @@ A Slack bot that helps you implement the Getting Things Done (GTD) methodology b
 - Capture tasks quickly using Slack commands.
 - Organize tasks into projects, contexts, and due dates.
 - Review and manage your tasks with simple commands.
-- Receive reminders for upcoming tasks. 
+- **Automated Reminders:**
+  - Daily reminders at 9 AM UTC for tasks due within 24 hours
+  - Daily inbox reminders at 9 AM UTC for unprocessed items in your inbox
 - User-friendly "Home" interface within Slack that displays your tasks and projects with buttons for actions.
 - Supports multiple users on the same Slack workspace (each user has their own task list).
 
@@ -78,7 +80,12 @@ SLACK_SIGNING_SECRET=your-signing-secret
 
 # Neon Database
 DATABASE_URL=postgres://username:password@hostname/database?sslmode=require
+
+# Cron Job Security (required for Vercel deployment)
+CRON_SECRET=your-random-secret-here
 ```
+
+**Note:** Generate a strong random secret for `CRON_SECRET` (e.g., using `openssl rand -base64 32`)
 
 ### 4. Run Database Migrations
 
@@ -121,10 +128,17 @@ npm i -g vercel
 # Deploy
 vercel
 
-# Set environment variables in Vercel dashboard
+# Set environment variables in Vercel dashboard:
+# - SLACK_BOT_TOKEN
+# - SLACK_SIGNING_SECRET
+# - DATABASE_URL
+# - CRON_SECRET
+
 # Then deploy to production
 vercel --prod
 ```
+
+**Important:** Automated reminders require Vercel's Cron Jobs feature, which is available on Pro and Enterprise plans only. The bot will still work without cron jobs, but you won't receive automated reminders.
 
 ## Available Commands
 
@@ -134,3 +148,40 @@ vercel --prod
 - `/gtd complete [task-id]` - Mark task as complete
 - `/gtd delete [task-id]` - Delete a task
 - `/gtd help` - Show help message
+
+## Automated Reminders
+
+The bot includes two automated reminder systems that run daily to help you stay on top of your tasks:
+
+### 1. Daily Due Task Reminders
+- **Schedule:** Every day at 9:00 AM UTC
+- **Purpose:** Reminds you of tasks that are due within the next 24 hours
+- **Message format:** Shows task title, description, and due date
+- **Delivery:** Sent as a Slack DM to each user with upcoming tasks
+
+### 2. Daily Inbox Reminders
+- **Schedule:** Every day at 9:00 AM UTC
+- **Purpose:** Reminds you to process items sitting in your inbox (following GTD methodology)
+- **Message format:** Shows count of inbox items and lists up to 5 tasks
+- **Delivery:** Sent as a Slack DM only to users who have items in their inbox
+- **Benefit:** Encourages regular inbox processing to keep your GTD system flowing
+
+### Architecture
+
+The reminder system uses a **master endpoint** with **individual reminder endpoints**:
+
+- **`/api/cron/reminders`** (Master) - Runs daily at 9 AM UTC via Vercel Cron
+  - Sends both inbox reminders AND due-task reminders
+  - Single cron entry in `vercel.json` (Vercel limit: max 1 cron job per day on free plan)
+
+- **`/api/cron/inbox-reminders`** (Individual) - Can be called directly for testing
+  - Sends inbox reminders to users with unprocessed items
+
+- **`/api/cron/due-task-reminders`** (Individual) - Can be called directly for testing
+  - Sends reminders for tasks due within 24 hours
+
+**Requirements:**
+- Vercel account (cron jobs available on all plans, limited to 1/day on free tier)
+- `CRON_SECRET` environment variable configured in Vercel
+
+**Note:** Individual endpoints are useful for manual testing but the master endpoint is used by the cron scheduler.

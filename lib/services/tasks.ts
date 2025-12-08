@@ -221,3 +221,30 @@ export async function getTasksDueSoon(hoursAhead: number = 24) {
 
   return dueTasks;
 }
+
+export async function getInboxTasksByUser() {
+  const inboxTasks = await db
+    .select({
+      task: tasks,
+      user: users,
+    })
+    .from(tasks)
+    .innerJoin(users, eq(tasks.slackUserId, users.slackUserId))
+    .where(eq(tasks.status, "inbox"))
+    .orderBy(desc(tasks.createdAt));
+
+  // Group tasks by user
+  const tasksByUser = new Map<
+    string,
+    { user: typeof users.$inferSelect; tasks: (typeof tasks.$inferSelect)[] }
+  >();
+
+  for (const { task, user } of inboxTasks) {
+    if (!tasksByUser.has(user.slackUserId)) {
+      tasksByUser.set(user.slackUserId, { user, tasks: [] });
+    }
+    tasksByUser.get(user.slackUserId)!.tasks.push(task);
+  }
+
+  return Array.from(tasksByUser.values());
+}

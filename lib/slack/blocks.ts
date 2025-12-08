@@ -1496,3 +1496,34 @@ export function buildSetPriorityModal(taskId: string): View {
     ],
   };
 }
+
+export function buildDeleteConfirmationModal(taskId: string): View {
+  return {
+    type: "modal",
+    callback_id: `delete_confirmation_modal_${taskId}`,
+    title: {
+      type: "plain_text",
+      text: "Delete Task",
+      emoji: true,
+    },
+    submit: {
+      type: "plain_text",
+      text: "Delete",
+      emoji: true,
+    },
+    close: {
+      type: "plain_text",
+      text: "Cancel",
+      emoji: true,
+    },
+    blocks: [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "⚠️ Are you sure you want to delete this task? This action cannot be undone.",
+        },
+      },
+    ],
+  };
+}

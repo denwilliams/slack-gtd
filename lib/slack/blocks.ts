@@ -126,8 +126,8 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
     inboxTasks.slice(0, 5).forEach(({ task, project, context }) => {
       // Build task text with project and context info
       let taskText = `*${task.title}*`;
-      if (task.description) {
-        taskText += `\n${task.description}`;
+      if (task.description?.trim()) {
+        taskText += `\n${task.description.trim()}`;
       }
 
       blocks.push({
@@ -224,7 +224,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}`,
+          text: `*${task.title}*${task.description?.trim() ? `\n${task.description.trim()}` : ""}`,
         },
         accessory: {
           type: "overflow",
@@ -348,7 +348,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}`,
+          text: `*${task.title}*${task.description?.trim() ? `\n${task.description.trim()}` : ""}`,
         },
         accessory: {
           type: "overflow",
@@ -448,7 +448,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}`,
+          text: `*${task.title}*${task.description?.trim() ? `\n${task.description.trim()}` : ""}`,
         },
         accessory: {
           type: "overflow",
@@ -548,7 +548,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}`,
+          text: `*${task.title}*${task.description?.trim() ? `\n${task.description.trim()}` : ""}`,
         },
         accessory: {
           type: "overflow",

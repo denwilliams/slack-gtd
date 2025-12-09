@@ -2090,3 +2090,195 @@ export function buildDeleteConfirmationModal(taskId: string): View {
     ],
   };
 }
+
+export function buildCreateTaskFromMessageModal(
+  messageText: string,
+  messageLink: string,
+  userProjects: Array<typeof projects.$inferSelect> = [],
+  userContexts: Array<typeof contexts.$inferSelect> = [],
+): View {
+  const blocks: any[] = [
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `📩 *Creating task from message:*\n>${messageText.substring(0, 150)}${messageText.length > 150 ? "..." : ""}`,
+      },
+    },
+    {
+      type: "divider",
+    },
+    {
+      type: "input",
+      block_id: "task_title_block",
+      element: {
+        type: "plain_text_input",
+        action_id: "task_title_input",
+        placeholder: {
+          type: "plain_text",
+          text: "Enter task title",
+        },
+        initial_value: messageText.substring(0, 500),
+        max_length: 500,
+      },
+      label: {
+        type: "plain_text",
+        text: "Task Title",
+        emoji: true,
+      },
+    },
+    {
+      type: "input",
+      block_id: "task_description_block",
+      element: {
+        type: "plain_text_input",
+        action_id: "task_description_input",
+        multiline: true,
+        placeholder: {
+          type: "plain_text",
+          text: "Add more details (optional)",
+        },
+        initial_value: `Message: ${messageLink}`,
+      },
+      label: {
+        type: "plain_text",
+        text: "Description",
+        emoji: true,
+      },
+      optional: true,
+    },
+  ];
+
+  // Add project selector if projects exist
+  if (userProjects.length > 0) {
+    blocks.push({
+      type: "input",
+      block_id: "task_project_block",
+      element: {
+        type: "static_select",
+        action_id: "task_project_input",
+        placeholder: {
+          type: "plain_text",
+          text: "Select project (optional)",
+        },
+        options: userProjects.map((project) => ({
+          text: {
+            type: "plain_text",
+            text: project.name,
+            emoji: true,
+          },
+          value: project.id,
+        })),
+      },
+      label: {
+        type: "plain_text",
+        text: "Project",
+        emoji: true,
+      },
+      optional: true,
+    });
+  }
+
+  // Add context selector if contexts exist
+  if (userContexts.length > 0) {
+    blocks.push({
+      type: "input",
+      block_id: "task_context_block",
+      element: {
+        type: "static_select",
+        action_id: "task_context_input",
+        placeholder: {
+          type: "plain_text",
+          text: "Select context (optional)",
+        },
+        options: userContexts.map((context) => ({
+          text: {
+            type: "plain_text",
+            text: context.name,
+            emoji: true,
+          },
+          value: context.id,
+        })),
+      },
+      label: {
+        type: "plain_text",
+        text: "Context",
+        emoji: true,
+      },
+      optional: true,
+    });
+  }
+
+  blocks.push({
+    type: "input",
+    block_id: "task_priority_block",
+    element: {
+      type: "static_select",
+      action_id: "task_priority_input",
+      placeholder: {
+        type: "plain_text",
+        text: "Select priority",
+      },
+      options: [
+        {
+          text: {
+            type: "plain_text",
+            text: "🔴 High",
+            emoji: true,
+          },
+          value: "high",
+        },
+        {
+          text: {
+            type: "plain_text",
+            text: "🟡 Medium",
+            emoji: true,
+          },
+          value: "medium",
+        },
+        {
+          text: {
+            type: "plain_text",
+            text: "🟢 Low",
+            emoji: true,
+          },
+          value: "low",
+        },
+      ],
+      initial_option: {
+        text: {
+          type: "plain_text",
+          text: "🟡 Medium",
+          emoji: true,
+        },
+        value: "medium",
+      },
+    },
+    label: {
+      type: "plain_text",
+      text: "Priority",
+      emoji: true,
+    },
+  });
+
+  return {
+    type: "modal",
+    callback_id: "create_task_from_message_modal",
+    title: {
+      type: "plain_text",
+      text: "Create GTD Task",
+      emoji: true,
+    },
+    submit: {
+      type: "plain_text",
+      text: "Create",
+      emoji: true,
+    },
+    close: {
+      type: "plain_text",
+      text: "Cancel",
+      emoji: true,
+    },
+    blocks,
+  };
+}

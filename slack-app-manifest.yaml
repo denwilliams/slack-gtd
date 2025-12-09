@@ -10,6 +10,11 @@ features:
   bot_user:
     display_name: GTD Bot
     always_online: true
+  shortcuts:
+    - name: Create GTD Task
+      type: message
+      callback_id: create_gtd_task
+      description: Create a GTD task from this message
   slash_commands:
     - command: /gtd
       url: https://YOUR_VERCEL_URL/api/slack/commands

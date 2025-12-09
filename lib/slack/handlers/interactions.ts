@@ -27,6 +27,7 @@ import {
   buildSetPriorityModal,
   buildReviewDoneModal,
   buildDeleteConfirmationModal,
+  buildCreateTaskFromMessageModal,
 } from "@/lib/slack/blocks";
 
 interface BlockAction {
@@ -64,12 +65,53 @@ interface InteractionPayload {
       >;
     };
   };
+  message?: {
+    text: string;
+    ts: string;
+    permalink?: string;
+  };
+  channel?: {
+    id: string;
+  };
+  callback_id?: string;
 }
 
 export async function handleInteraction(payload: InteractionPayload) {
   const { user: slackUser, team: slackTeam, actions, type, view } = payload;
 
   const user = await findOrCreateUser(slackUser.id, slackTeam.id);
+
+  // Handle message shortcut
+  if (type === "message_action" && payload.callback_id === "create_gtd_task") {
+    const slack = getSlackClient();
+    const message = payload.message!;
+    const channelId = payload.channel!.id;
+
+    // Build message permalink
+    let messageLink = message.permalink || "";
+    if (!messageLink && message.ts && channelId) {
+      const teamDomain = slackTeam.id;
+      messageLink = `https://slack.com/archives/${channelId}/p${message.ts.replace(".", "")}`;
+    }
+
+    // Fetch user's projects and contexts for the modal
+    const projects = await getUserProjects(user.slackUserId);
+    const contexts = await getUserContexts(user.slackUserId);
+
+    const modalView = buildCreateTaskFromMessageModal(
+      message.text,
+      messageLink,
+      projects,
+      contexts,
+    );
+
+    await slack.views.open({
+      trigger_id: payload.trigger_id!,
+      view: modalView,
+    });
+
+    return { ok: true };
+  }
 
   // Handle modal submission
   if (type === "view_submission" && view?.callback_id === "add_task_modal") {
@@ -105,6 +147,47 @@ export async function handleInteraction(payload: InteractionPayload) {
       contextId: contextId || undefined,
       timeEstimate: (timeEstimate as "quick" | "30min" | "1hr" | "2hr+") || undefined,
       energyLevel: (energyLevel as "high" | "medium" | "low") || undefined,
+    });
+
+    // Refresh home tab
+    await refreshHomeTab(user.slackUserId, slackTeam.id);
+
+    return {
+      response_action: "clear",
+    };
+  }
+
+  // Handle create task from message modal submission
+  if (
+    type === "view_submission" &&
+    view?.callback_id === "create_task_from_message_modal"
+  ) {
+    const values = view.state.values;
+
+    const title = values.task_title_block.task_title_input.value;
+    const description =
+      values.task_description_block.task_description_input.value;
+    const priority =
+      values.task_priority_block.task_priority_input.selected_option?.value;
+    const projectId =
+      values.task_project_block?.task_project_input?.selected_option?.value;
+    const contextId =
+      values.task_context_block?.task_context_input?.selected_option?.value;
+
+    if (!title) {
+      return {
+        response_action: "errors",
+        errors: {
+          task_title_block: "Task title is required",
+        },
+      };
+    }
+
+    await createTask(user.slackUserId, title, {
+      description: description || undefined,
+      priority: (priority as "high" | "medium" | "low") || "medium",
+      projectId: projectId || undefined,
+      contextId: contextId || undefined,
     });
 
     // Refresh home tab

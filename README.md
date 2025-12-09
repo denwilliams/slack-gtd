@@ -5,6 +5,7 @@ A Slack bot that helps you implement the Getting Things Done (GTD) methodology b
 ## Features
 
 - Capture tasks quickly using Slack commands.
+- **Create tasks from any message** - Use the message shortcut (click the three dots on any message) to quickly turn conversations into actionable tasks.
 - Organize tasks into projects, contexts, and due dates.
 - Review and manage your tasks with simple commands.
 - **Automated Reminders:**
@@ -109,6 +110,10 @@ npm run db:push
    - Request URL: `https://your-app.vercel.app/api/slack/events`
 5. Under **Interactivity & Shortcuts**, enable interactivity:
    - Request URL: `https://your-app.vercel.app/api/slack/interactions`
+   - Create a message shortcut:
+     - Name: "Create GTD Task"
+     - Short Description: "Create a GTD task from this message"
+     - Callback ID: `create_gtd_task`
 6. Install the app to your workspace and copy the Bot Token
 
 ### 6. Run Development Server

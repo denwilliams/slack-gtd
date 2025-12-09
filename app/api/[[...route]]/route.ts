@@ -1,10 +1,13 @@
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
-import { getTasksDueSoon } from "@/lib/services/tasks";
+import { getTasksDueSoon, getInboxTasksByUser } from "@/lib/services/tasks";
 import { handleSlashCommand } from "@/lib/slack/handlers/commands";
 import { handleAppHomeOpened } from "@/lib/slack/handlers/home";
 import { handleInteraction } from "@/lib/slack/handlers/interactions";
-import { sendTaskReminderBatch } from "@/lib/slack/messages";
+import {
+  sendTaskReminderBatch,
+  sendInboxReminderBatch,
+} from "@/lib/slack/messages";
 
 // Create the main Hono app
 const app = new Hono().basePath("/api");
@@ -14,8 +17,50 @@ app.get("/health", (c) => {
   return c.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Cron endpoint for sending reminders
+// Master cron endpoint - runs daily at 9 AM UTC and sends all reminders
 app.get("/cron/reminders", async (c) => {
+  // Verify the cron secret to prevent unauthorized access
+  const authHeader = c.req.header("Authorization");
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  try {
+    const now = new Date();
+
+    const results: any = {
+      success: true,
+      timestamp: now.toISOString(),
+    };
+
+    // Send inbox reminders
+    const usersWithInbox = await getInboxTasksByUser();
+    const inboxResults = await sendInboxReminderBatch(usersWithInbox);
+    results.inboxReminders = {
+      sent: inboxResults.sent.length,
+      failed: inboxResults.failed.length,
+      usersWithInbox: usersWithInbox.length,
+      totalInboxItems: usersWithInbox.reduce((sum, u) => sum + u.tasks.length, 0),
+    };
+
+    // Send due-task reminders
+    const dueTasks = await getTasksDueSoon(24);
+    const dueTaskResults = await sendTaskReminderBatch(dueTasks);
+    results.dueTaskReminders = {
+      sent: dueTaskResults.sent.length,
+      failed: dueTaskResults.failed.length,
+      tasksChecked: dueTasks.length,
+    };
+
+    return c.json(results);
+  } catch (error) {
+    console.error("Error in master cron job:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// Individual cron endpoint for due-task reminders (can be called directly for testing)
+app.get("/cron/due-task-reminders", async (c) => {
   // Verify the cron secret to prevent unauthorized access
   const authHeader = c.req.header("Authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -36,7 +81,35 @@ app.get("/cron/reminders", async (c) => {
       tasksChecked: dueTasks.length,
     });
   } catch (error) {
-    console.error("Error in cron job:", error);
+    console.error("Error in due-task reminder cron job:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// Individual cron endpoint for inbox reminders (can be called directly for testing)
+app.get("/cron/inbox-reminders", async (c) => {
+  // Verify the cron secret to prevent unauthorized access
+  const authHeader = c.req.header("Authorization");
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  try {
+    // Get all users with items in their inbox
+    const usersWithInbox = await getInboxTasksByUser();
+
+    // Send inbox reminders to users (only those who have inbox items)
+    const results = await sendInboxReminderBatch(usersWithInbox);
+
+    return c.json({
+      success: true,
+      remindersSent: results.sent.length,
+      remindersFailed: results.failed.length,
+      usersWithInbox: usersWithInbox.length,
+      totalInboxItems: usersWithInbox.reduce((sum, u) => sum + u.tasks.length, 0),
+    });
+  } catch (error) {
+    console.error("Error in inbox reminder cron job:", error);
     return c.json({ error: "Internal server error" }, 500);
   }
 });

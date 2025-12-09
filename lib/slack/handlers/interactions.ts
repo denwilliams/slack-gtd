@@ -11,6 +11,7 @@ import {
   getTaskById,
   updateTaskProjectContext,
   updateTaskDetails,
+  getCompletedTasksWithRelations,
 } from "@/lib/services/tasks";
 import { findOrCreateUser } from "@/lib/services/user";
 import { refreshHomeTab } from "./home";
@@ -24,6 +25,8 @@ import {
   buildAddContextModal,
   buildEditTaskModal,
   buildSetPriorityModal,
+  buildReviewDoneModal,
+  buildDeleteConfirmationModal,
 } from "@/lib/slack/blocks";
 
 interface BlockAction {
@@ -195,12 +198,23 @@ export async function handleInteraction(payload: InteractionPayload) {
       return { ok: true };
     }
 
-    // Handle overflow menu (set priority, edit, move, or delete)
+    // Handle overflow menu (complete, set priority, edit, move, or delete)
     if (action.action_id.startsWith("task_overflow_")) {
       const selectedValue = action.selected_option?.value!;
 
-      // Parse the value format: "set_priority:taskId", "edit:taskId", "move:taskId", or "delete:taskId"
-      if (selectedValue.startsWith("set_priority:")) {
+      // Parse the value format: "complete:taskId", "set_priority:taskId", "edit:taskId", "move:taskId", or "delete:taskId"
+      if (selectedValue.startsWith("complete:")) {
+        const taskId = selectedValue.replace("complete:", "");
+        await completeTask(taskId, user.slackUserId);
+
+        // Refresh home tab
+        await refreshHomeTab(user.slackUserId, slackTeam.id);
+
+        return {
+          response_action: "update",
+          view: {},
+        };
+      } else if (selectedValue.startsWith("set_priority:")) {
         const taskId = selectedValue.replace("set_priority:", "");
         const slack = getSlackClient();
         const modalView = buildSetPriorityModal(taskId);
@@ -215,7 +229,7 @@ export async function handleInteraction(payload: InteractionPayload) {
         const taskId = selectedValue.replace("edit:", "");
         const slack = getSlackClient();
 
-        // Fetch the task to get current project/context/time/energy
+        // Fetch the task to get current details (title, description, project, context, time, energy)
         const task = await getTaskById(taskId, user.slackUserId);
         if (!task) {
           return { ok: true };
@@ -227,6 +241,8 @@ export async function handleInteraction(payload: InteractionPayload) {
 
         const modalView = buildEditTaskModal(
           taskId,
+          task.title,
+          task.description,
           task.projectId,
           task.contextId,
           task.timeEstimate,
@@ -254,15 +270,15 @@ export async function handleInteraction(payload: InteractionPayload) {
         return { ok: true };
       } else if (selectedValue.startsWith("delete:")) {
         const taskId = selectedValue.replace("delete:", "");
-        await deleteTask(taskId, user.slackUserId);
+        const slack = getSlackClient();
+        const modalView = buildDeleteConfirmationModal(taskId);
 
-        // Refresh home tab
-        await refreshHomeTab(user.slackUserId, slackTeam.id);
+        await slack.views.open({
+          trigger_id: payload.trigger_id!,
+          view: modalView,
+        });
 
-        return {
-          response_action: "update",
-          view: {},
-        };
+        return { ok: true };
       }
     }
 
@@ -329,6 +345,23 @@ export async function handleInteraction(payload: InteractionPayload) {
     if (action.action_id === "open_add_context_modal") {
       const slack = getSlackClient();
       const modalView = buildAddContextModal();
+
+      await slack.views.open({
+        trigger_id: payload.trigger_id!,
+        view: modalView,
+      });
+
+      return { ok: true };
+    }
+
+    // Handle open review done modal
+    if (action.action_id === "open_review_done_modal") {
+      const slack = getSlackClient();
+
+      // Fetch completed tasks for the user
+      const completedTasks = await getCompletedTasksWithRelations(user.slackUserId);
+
+      const modalView = buildReviewDoneModal(completedTasks);
 
       await slack.views.open({
         trigger_id: payload.trigger_id!,
@@ -417,7 +450,12 @@ export async function handleInteraction(payload: InteractionPayload) {
     const dueDate = values.due_date_block?.due_date_input?.selected_date;
     const delegatedTo = values.delegated_to_block?.delegated_to_input?.value;
 
-    if (moveTo === "scheduled") {
+    if (moveTo === "next_actions") {
+      await clarifyTask(taskId, user.slackUserId, {
+        status: "active",
+        dueDate: null,
+      });
+    } else if (moveTo === "scheduled") {
       await clarifyTask(taskId, user.slackUserId, {
         status: "active",
         dueDate: dueDate ? new Date(dueDate) : new Date(),
@@ -507,6 +545,11 @@ export async function handleInteraction(payload: InteractionPayload) {
     const taskId = view.callback_id.replace("edit_task_modal_", "");
     const values = view.state.values;
 
+    // Get title and description
+    const title = values.edit_task_title_block.edit_task_title_input.value;
+    const description =
+      values.edit_task_description_block.edit_task_description_input.value;
+
     // Get selected project (handle "none" value)
     const projectId =
       values.edit_task_project_block?.edit_task_project_input
@@ -535,14 +578,24 @@ export async function handleInteraction(payload: InteractionPayload) {
     const finalEnergyLevel =
       energyLevel && energyLevel !== "none" ? (energyLevel as "high" | "medium" | "low") : null;
 
-    await updateTaskDetails(
-      taskId,
-      user.slackUserId,
-      finalProjectId,
-      finalContextId,
-      finalTimeEstimate,
-      finalEnergyLevel,
-    );
+    // Validate title
+    if (!title) {
+      return {
+        response_action: "errors",
+        errors: {
+          edit_task_title_block: "Task title is required",
+        },
+      };
+    }
+
+    await updateTaskDetails(taskId, user.slackUserId, {
+      title,
+      description: description || null,
+      projectId: finalProjectId,
+      contextId: finalContextId,
+      timeEstimate: finalTimeEstimate,
+      energyLevel: finalEnergyLevel,
+    });
 
     // Refresh home tab
     await refreshHomeTab(user.slackUserId, slackTeam.id);
@@ -566,6 +619,22 @@ export async function handleInteraction(payload: InteractionPayload) {
     if (priority) {
       await updateTaskPriority(taskId, user.slackUserId, priority);
     }
+
+    // Refresh home tab
+    await refreshHomeTab(user.slackUserId, slackTeam.id);
+
+    return {
+      response_action: "clear",
+    };
+  }
+
+  // Handle delete confirmation modal submission
+  if (
+    type === "view_submission" &&
+    view?.callback_id.startsWith("delete_confirmation_modal_")
+  ) {
+    const taskId = view.callback_id.replace("delete_confirmation_modal_", "");
+    await deleteTask(taskId, user.slackUserId);
 
     // Refresh home tab
     await refreshHomeTab(user.slackUserId, slackTeam.id);

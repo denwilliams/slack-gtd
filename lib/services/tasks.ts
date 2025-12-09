@@ -135,37 +135,24 @@ export async function updateTaskProjectContext(
 export async function updateTaskDetails(
   taskId: string,
   userId: string,
-  projectId: string | null,
-  contextId: string | null,
-  timeEstimate: "quick" | "30min" | "1hr" | "2hr+" | null,
-  energyLevel: "high" | "medium" | "low" | null,
+  options: {
+    title?: string;
+    description?: string | null;
+    projectId?: string | null;
+    contextId?: string | null;
+    timeEstimate?: "quick" | "30min" | "1hr" | "2hr+" | null;
+    energyLevel?: "high" | "medium" | "low" | null;
+  },
 ) {
   const task = await db
     .update(tasks)
     .set({
-      projectId,
-      contextId,
-      timeEstimate,
-      energyLevel,
-      updatedAt: new Date(),
-    })
-    .where(and(eq(tasks.id, taskId), eq(tasks.slackUserId, userId)))
-    .returning();
-
-  return task[0];
-}
-
-export async function updateTaskTimeEnergy(
-  taskId: string,
-  userId: string,
-  timeEstimate: "quick" | "30min" | "1hr" | "2hr+" | null,
-  energyLevel: "high" | "medium" | "low" | null,
-) {
-  const task = await db
-    .update(tasks)
-    .set({
-      timeEstimate,
-      energyLevel,
+      title: options.title,
+      description: options.description,
+      projectId: options.projectId,
+      contextId: options.contextId,
+      timeEstimate: options.timeEstimate,
+      energyLevel: options.energyLevel,
       updatedAt: new Date(),
     })
     .where(and(eq(tasks.id, taskId), eq(tasks.slackUserId, userId)))
@@ -180,7 +167,7 @@ export async function clarifyTask(
   options: {
     status: "active" | "someday" | "waiting" | "archived";
     priority?: "high" | "medium" | "low";
-    dueDate?: Date;
+    dueDate?: Date | null;
     delegatedTo?: string;
   },
 ) {
@@ -266,4 +253,65 @@ export async function getTasksDueSoon(hoursAhead: number = 24) {
     );
 
   return dueTasks;
+}
+
+export async function getInboxTasksByUser() {
+  const inboxTasks = await db
+    .select({
+      task: tasks,
+      user: users,
+    })
+    .from(tasks)
+    .innerJoin(users, eq(tasks.slackUserId, users.slackUserId))
+    .where(eq(tasks.status, "inbox"))
+    .orderBy(desc(tasks.createdAt));
+
+  // Group tasks by user
+  const tasksByUser = new Map<
+    string,
+    { user: typeof users.$inferSelect; tasks: (typeof tasks.$inferSelect)[] }
+  >();
+
+  for (const { task, user } of inboxTasks) {
+    if (!tasksByUser.has(user.slackUserId)) {
+      tasksByUser.set(user.slackUserId, { user, tasks: [] });
+    }
+    tasksByUser.get(user.slackUserId)!.tasks.push(task);
+  }
+
+  return Array.from(tasksByUser.values());
+}
+
+export async function getCompletedTaskCount(userId: string, daysAgo: number) {
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - daysAgo);
+
+  const result = await db
+    .select()
+    .from(tasks)
+    .where(
+      and(
+        eq(tasks.slackUserId, userId),
+        eq(tasks.status, "completed"),
+        gte(tasks.completedAt, cutoffDate),
+      ),
+    );
+
+  return result.length;
+}
+
+export async function getCompletedTasksWithRelations(userId: string) {
+  const result = await db
+    .select({
+      task: tasks,
+      project: projects,
+      context: contexts,
+    })
+    .from(tasks)
+    .leftJoin(projects, eq(tasks.projectId, projects.id))
+    .leftJoin(contexts, eq(tasks.contextId, contexts.id))
+    .where(and(eq(tasks.slackUserId, userId), eq(tasks.status, "completed")))
+    .orderBy(desc(tasks.completedAt));
+
+  return result;
 }

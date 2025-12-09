@@ -17,6 +17,8 @@ interface GTDTasks {
   active: Array<TaskWithRelations>;
   waiting: Array<TaskWithRelations>;
   someday: Array<TaskWithRelations>;
+  completed7Days: number;
+  completed30Days: number;
 }
 
 export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
@@ -25,6 +27,8 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
     active: allActiveTasks,
     waiting: waitingTasks,
     someday: somedayTasks,
+    completed7Days,
+    completed30Days,
   } = tasksByStatus;
 
   // Separate active tasks into scheduled (with due date) and next actions (without due date)
@@ -70,7 +74,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
       elements: [
         {
           type: "mrkdwn",
-          text: `📥 Inbox: *${inboxTasks.length}* • ✅ Next Actions: *${nextActionTasks.length}* • 📅 Scheduled: *${scheduledTasks.length}* • ⏳ Waiting: *${waitingTasks.length}* • 💭 Someday: *${somedayTasks.length}*`,
+          text: `📥 Inbox: *${inboxTasks.length}* • ✅ Next Actions: *${nextActionTasks.length}* • 📅 Scheduled: *${scheduledTasks.length}* • ⏳ Waiting: *${waitingTasks.length}* • 💭 Someday: *${somedayTasks.length}* • ✔️ Done (7d): *${completed7Days}* • ✔️ Done (30d): *${completed30Days}*`,
         },
       ],
     },
@@ -105,6 +109,15 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
           },
           action_id: "open_add_context_modal",
         },
+        {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "🔍 Review Done",
+            emoji: true,
+          },
+          action_id: "open_review_done_modal",
+        },
       ],
     },
     {
@@ -126,8 +139,8 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
     inboxTasks.slice(0, 5).forEach(({ task, project, context }) => {
       // Build task text with project and context info
       let taskText = `*${task.title}*`;
-      if (task.description) {
-        taskText += `\n${task.description}`;
+      if (task.description?.trim()) {
+        taskText += `\n${task.description.trim()}`;
       }
 
       blocks.push({
@@ -203,6 +216,11 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
           },
         ],
       });
+
+      // Add divider between tasks
+      blocks.push({
+        type: "divider",
+      });
     });
 
     if (inboxTasks.length > 5) {
@@ -238,11 +256,19 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}`,
+          text: `*${task.title}*${task.description?.trim() ? `\n${task.description.trim()}` : ""}`,
         },
         accessory: {
           type: "overflow",
           options: [
+            {
+              text: {
+                type: "plain_text",
+                text: "✅ Complete",
+                emoji: true,
+              },
+              value: `complete:${task.id}`,
+            },
             {
               text: {
                 type: "plain_text",
@@ -326,22 +352,9 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         elements: contextElements,
       });
 
-      // Add complete button
+      // Add divider between tasks
       blocks.push({
-        type: "actions",
-        elements: [
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "Complete",
-              emoji: true,
-            },
-            style: "primary",
-            value: task.id,
-            action_id: `complete_task_${task.id}`,
-          },
-        ],
+        type: "divider",
       });
     });
 
@@ -386,11 +399,19 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}`,
+          text: `*${task.title}*${task.description?.trim() ? `\n${task.description.trim()}` : ""}`,
         },
         accessory: {
           type: "overflow",
           options: [
+            {
+              text: {
+                type: "plain_text",
+                text: "✅ Complete",
+                emoji: true,
+              },
+              value: `complete:${task.id}`,
+            },
             {
               text: {
                 type: "plain_text",
@@ -470,21 +491,9 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         elements: contextElements,
       });
 
+      // Add divider between tasks
       blocks.push({
-        type: "actions",
-        elements: [
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "Complete",
-              emoji: true,
-            },
-            style: "primary",
-            value: task.id,
-            action_id: `complete_task_${task.id}`,
-          },
-        ],
+        type: "divider",
       });
     });
 
@@ -509,11 +518,19 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}`,
+          text: `*${task.title}*${task.description?.trim() ? `\n${task.description.trim()}` : ""}`,
         },
         accessory: {
           type: "overflow",
           options: [
+            {
+              text: {
+                type: "plain_text",
+                text: "✅ Mark as Done",
+                emoji: true,
+              },
+              value: `complete:${task.id}`,
+            },
             {
               text: {
                 type: "plain_text",
@@ -593,21 +610,9 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         });
       }
 
+      // Add divider between tasks
       blocks.push({
-        type: "actions",
-        elements: [
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "Mark as Done",
-              emoji: true,
-            },
-            style: "primary",
-            value: task.id,
-            action_id: `complete_task_${task.id}`,
-          },
-        ],
+        type: "divider",
       });
     });
 
@@ -632,7 +637,7 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*${task.title}*${task.description ? `\n${task.description}` : ""}`,
+          text: `*${task.title}*${task.description?.trim() ? `\n${task.description.trim()}` : ""}`,
         },
         accessory: {
           type: "overflow",
@@ -725,6 +730,11 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
             action_id: `activate_task_${task.id}`,
           },
         ],
+      });
+
+      // Add divider between tasks
+      blocks.push({
+        type: "divider",
       });
     });
 
@@ -1016,6 +1026,14 @@ export function buildMoveTaskModal(taskId: string): View {
           type: "radio_buttons",
           action_id: "move_to_input",
           options: [
+            {
+              text: {
+                type: "plain_text",
+                text: "✅ Next Actions",
+                emoji: true,
+              },
+              value: "next_actions",
+            },
             {
               text: {
                 type: "plain_text",
@@ -1471,6 +1489,8 @@ export function buildAddContextModal(): View {
 
 export function buildEditTaskModal(
   taskId: string,
+  currentTitle: string,
+  currentDescription: string | null,
   currentProjectId: string | null,
   currentContextId: string | null,
   currentTimeEstimate: string | null,
@@ -1479,6 +1499,49 @@ export function buildEditTaskModal(
   userContexts: Array<typeof contexts.$inferSelect>,
 ): View {
   const blocks: any[] = [];
+
+  // Add title input field
+  blocks.push({
+    type: "input",
+    block_id: "edit_task_title_block",
+    element: {
+      type: "plain_text_input",
+      action_id: "edit_task_title_input",
+      placeholder: {
+        type: "plain_text",
+        text: "Enter task title",
+      },
+      initial_value: currentTitle,
+      max_length: 500,
+    },
+    label: {
+      type: "plain_text",
+      text: "Task Title",
+      emoji: true,
+    },
+  });
+
+  // Add description input field
+  blocks.push({
+    type: "input",
+    block_id: "edit_task_description_block",
+    element: {
+      type: "plain_text_input",
+      action_id: "edit_task_description_input",
+      multiline: true,
+      placeholder: {
+        type: "plain_text",
+        text: "Add more details (optional)",
+      },
+      initial_value: currentDescription || "",
+    },
+    label: {
+      type: "plain_text",
+      text: "Description",
+      emoji: true,
+    },
+    optional: true,
+  });
 
   // Add project selector
   if (userProjects.length > 0) {
@@ -1858,6 +1921,170 @@ export function buildSetPriorityModal(taskId: string): View {
           type: "plain_text",
           text: "Choose priority level",
           emoji: true,
+        },
+      },
+    ],
+  };
+}
+
+export function buildReviewDoneModal(
+  completedTasks: Array<TaskWithRelations>,
+): View {
+  const blocks: (KnownBlock | Block)[] = [];
+
+  if (completedTasks.length === 0) {
+    blocks.push({
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: "🎉 No completed tasks yet. Start completing tasks to see them here!",
+      },
+    });
+  } else {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    let added7DayDivider = false;
+    let added30DayDivider = false;
+
+    blocks.push({
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `*Total Completed Tasks:* ${completedTasks.length}`,
+      },
+    });
+
+    blocks.push({
+      type: "divider",
+    });
+
+    completedTasks.forEach(({ task, project, context }) => {
+      const completedDate = task.completedAt;
+
+      // Add 7-day divider if needed
+      if (!added7DayDivider && completedDate && completedDate < sevenDaysAgo) {
+        blocks.push({
+          type: "header",
+          text: {
+            type: "plain_text",
+            text: "— Completed 7-30 Days Ago —",
+            emoji: true,
+          },
+        });
+        blocks.push({
+          type: "divider",
+        });
+        added7DayDivider = true;
+      }
+
+      // Add 30-day divider if needed
+      if (!added30DayDivider && completedDate && completedDate < thirtyDaysAgo) {
+        blocks.push({
+          type: "header",
+          text: {
+            type: "plain_text",
+            text: "— Completed Over 30 Days Ago —",
+            emoji: true,
+          },
+        });
+        blocks.push({
+          type: "divider",
+        });
+        added30DayDivider = true;
+      }
+
+      // Task section
+      let taskText = `*${task.title}*`;
+      if (task.description?.trim()) {
+        taskText += `\n${task.description.trim()}`;
+      }
+
+      blocks.push({
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: taskText,
+        },
+      });
+
+      // Add context with project, context, and completion date
+      const contextElements: { type: "mrkdwn"; text: string }[] = [];
+      if (project) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: `📁 ${project.name}`,
+        });
+      }
+      if (context) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: `🏷️ ${context.name}`,
+        });
+      }
+      if (completedDate) {
+        contextElements.push({
+          type: "mrkdwn" as const,
+          text: `✅ Completed: ${completedDate.toISOString().split("T")[0]}`,
+        });
+      }
+
+      if (contextElements.length > 0) {
+        blocks.push({
+          type: "context",
+          elements: contextElements,
+        });
+      }
+
+      blocks.push({
+        type: "divider",
+      });
+    });
+  }
+
+  return {
+    type: "modal",
+    callback_id: "review_done_modal",
+    title: {
+      type: "plain_text",
+      text: "Review Completed",
+      emoji: true,
+    },
+    close: {
+      type: "plain_text",
+      text: "Close",
+      emoji: true,
+    },
+    blocks,
+  };
+}
+
+export function buildDeleteConfirmationModal(taskId: string): View {
+  return {
+    type: "modal",
+    callback_id: `delete_confirmation_modal_${taskId}`,
+    title: {
+      type: "plain_text",
+      text: "Delete Task",
+      emoji: true,
+    },
+    submit: {
+      type: "plain_text",
+      text: "Delete",
+      emoji: true,
+    },
+    close: {
+      type: "plain_text",
+      text: "Cancel",
+      emoji: true,
+    },
+    blocks: [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "⚠️ Are you sure you want to delete this task? This action cannot be undone.",
         },
       },
     ],

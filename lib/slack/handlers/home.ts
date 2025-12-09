@@ -1,4 +1,4 @@
-import { getUserTasksWithRelations } from "@/lib/services/tasks";
+import { getUserTasksWithRelations, getCompletedTaskCount } from "@/lib/services/tasks";
 import { findOrCreateUser } from "@/lib/services/user";
 import { buildHomeTab } from "@/lib/slack/blocks";
 import { getSlackClient } from "@/lib/slack/client";
@@ -14,12 +14,18 @@ export async function handleAppHomeOpened(userId: string, teamId: string) {
     const waitingTasks = await getUserTasksWithRelations(user.slackUserId, "waiting");
     const somedayTasks = await getUserTasksWithRelations(user.slackUserId, "someday");
 
+    // Get completed task counts
+    const completed7Days = await getCompletedTaskCount(user.slackUserId, 7);
+    const completed30Days = await getCompletedTaskCount(user.slackUserId, 30);
+
     // Build home tab view
     const view = buildHomeTab({
       inbox: inboxTasks,
       active: activeTasks,
       waiting: waitingTasks,
       someday: somedayTasks,
+      completed7Days,
+      completed30Days,
     });
 
     // Publish the view

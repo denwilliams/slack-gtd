@@ -118,6 +118,15 @@ export function buildHomeTab(tasksByStatus: GTDTasks): HomeView {
           },
           action_id: "open_review_done_modal",
         },
+        {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "🔗 Generate Export URL",
+            emoji: true,
+          },
+          action_id: "generate_export_url",
+        },
       ],
     },
     {

@@ -13,6 +13,8 @@ import {
   getTasksByExportId,
   getExistingExportUrl,
 } from "@/lib/services/export";
+import { db } from "@/db";
+import { sql } from "drizzle-orm";
 
 // Create the main Hono app
 const app = new Hono().basePath("/api");
@@ -20,6 +22,35 @@ const app = new Hono().basePath("/api");
 // Health check endpoint
 app.get("/health", (c) => {
   return c.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+// Database migration endpoint
+app.post("/db/migrate", async (c) => {
+  // Verify the migration secret to prevent unauthorized access
+  const authHeader = c.req.header("Authorization");
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  try {
+    // Create export_urls table if it doesn't exist
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS export_urls (
+        id VARCHAR(64) PRIMARY KEY,
+        slack_user_id VARCHAR(255) NOT NULL REFERENCES users(slack_user_id),
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )
+    `);
+
+    return c.json({
+      success: true,
+      message: "Database migration completed successfully",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Error running migration:", error);
+    return c.json({ error: "Migration failed", details: String(error) }, 500);
+  }
 });
 
 // Export URL endpoints

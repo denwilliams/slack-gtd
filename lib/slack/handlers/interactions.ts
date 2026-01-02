@@ -29,6 +29,10 @@ import {
   buildDeleteConfirmationModal,
   buildCreateTaskFromMessageModal,
 } from "@/lib/slack/blocks";
+import {
+  createExportUrl,
+  getExistingExportUrl,
+} from "@/lib/services/export";
 
 interface BlockAction {
   type: string;
@@ -449,6 +453,52 @@ export async function handleInteraction(payload: InteractionPayload) {
       await slack.views.open({
         trigger_id: payload.trigger_id!,
         view: modalView,
+      });
+
+      return { ok: true };
+    }
+
+    // Handle generate export URL
+    if (action.action_id === "generate_export_url") {
+      const slack = getSlackClient();
+
+      // Check if user already has an export URL
+      let exportId = await getExistingExportUrl(user.slackUserId);
+
+      // If no export URL exists, create one
+      if (!exportId) {
+        exportId = await createExportUrl(user.slackUserId);
+      }
+
+      // Build the full URL
+      const baseUrl = process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000";
+      const exportUrl = `${baseUrl}/api/export/${exportId}`;
+
+      // Send an ephemeral message to the user with the export URL
+      await slack.chat.postEphemeral({
+        channel: slackUser.id,
+        user: slackUser.id,
+        text: `Your GTD Export URL has been generated!`,
+        blocks: [
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: `🔗 *Your GTD Export URL*\n\nUse this URL to access your GTD tasks in JSON format. This URL is unique to you and can be used by other systems to peek at your current GTD state.\n\n\`${exportUrl}\``,
+            },
+          },
+          {
+            type: "context",
+            elements: [
+              {
+                type: "mrkdwn",
+                text: "⚠️ Keep this URL private - anyone with this link can view your tasks!",
+              },
+            ],
+          },
+        ],
       });
 
       return { ok: true };

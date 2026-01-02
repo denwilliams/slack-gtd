@@ -63,3 +63,11 @@ export const reminderPreferences = pgTable("reminder_preferences", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+export const exportUrls = pgTable("export_urls", {
+  id: varchar("id", { length: 64 }).primaryKey(), // crypto-generated ID
+  slackUserId: varchar("slack_user_id", { length: 255 })
+    .references(() => users.slackUserId)
+    .notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});

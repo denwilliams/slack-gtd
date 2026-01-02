@@ -8,6 +8,11 @@ import {
   sendTaskReminderBatch,
   sendInboxReminderBatch,
 } from "@/lib/slack/messages";
+import {
+  createExportUrl,
+  getTasksByExportId,
+  getExistingExportUrl,
+} from "@/lib/services/export";
 
 // Create the main Hono app
 const app = new Hono().basePath("/api");
@@ -15,6 +20,72 @@ const app = new Hono().basePath("/api");
 // Health check endpoint
 app.get("/health", (c) => {
   return c.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+// Export URL endpoints
+// Generate a new export URL for a user (internal use only - called from Slack interactions)
+app.post("/export/generate", async (c) => {
+  try {
+    const body = await c.req.json();
+    const { userId } = body;
+
+    if (!userId) {
+      return c.json({ error: "userId is required" }, 400);
+    }
+
+    // Check if user already has an export URL
+    const existingExportId = await getExistingExportUrl(userId);
+
+    if (existingExportId) {
+      // Return the existing export URL
+      const baseUrl = process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000";
+      return c.json({
+        exportId: existingExportId,
+        url: `${baseUrl}/api/export/${existingExportId}`,
+      });
+    }
+
+    // Generate a new export URL
+    const exportId = await createExportUrl(userId);
+
+    // Build the full URL
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000";
+    const exportUrl = `${baseUrl}/api/export/${exportId}`;
+
+    return c.json({
+      exportId,
+      url: exportUrl,
+    });
+  } catch (error) {
+    console.error("Error generating export URL:", error);
+    return c.json({ error: "Failed to generate export URL" }, 500);
+  }
+});
+
+// Retrieve GTD items via export URL (public endpoint with obfuscated ID)
+app.get("/export/:id", async (c) => {
+  try {
+    const exportId = c.req.param("id");
+
+    if (!exportId) {
+      return c.json({ error: "Export ID is required" }, 400);
+    }
+
+    const data = await getTasksByExportId(exportId);
+
+    if (!data) {
+      return c.json({ error: "Export URL not found" }, 404);
+    }
+
+    return c.json(data);
+  } catch (error) {
+    console.error("Error retrieving export data:", error);
+    return c.json({ error: "Failed to retrieve export data" }, 500);
+  }
 });
 
 // Master cron endpoint - runs daily at 9 AM UTC and sends all reminders
